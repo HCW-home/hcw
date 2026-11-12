@@ -19,25 +19,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
-from django.http import Http404
-from django.views.static import serve
 
-from core.storage import is_confidential
 from core.views import LoginSelectorView
-
-
-def debug_media_serve(request, path, document_root=None, **kwargs):
-    """Dev-only media server that keeps message attachments out.
-
-    Django's static serve has no notion of who may read a file, and an
-    attachment is medical content, so under DEBUG the whole MEDIA_ROOT would
-    otherwise be readable by path without authentication. The only way to an
-    attachment stays `MessageAttachmentView`, which checks consultation access.
-    """
-    if is_confidential(path):
-        raise Http404("Message attachments are served by the API only.")
-    return serve(request, path, document_root=document_root, **kwargs)
-
 
 urlpatterns = [
     path("", LoginSelectorView.as_view(), name="login_selector"),
@@ -55,10 +38,6 @@ urlpatterns = [
 ] + i18n_patterns(path('admin/', admin.site.urls))
 
 if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-        view=debug_media_serve,
-    )
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

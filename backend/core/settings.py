@@ -19,24 +19,12 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from celery.schedules import crontab
 from django.core.exceptions import ImproperlyConfigured
-from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop
 from dotenv import load_dotenv
-from firebase_admin import get_app, initialize_app
+from firebase_admin import initialize_app
 from unfold.contrib.constance.settings import UNFOLD_CONSTANCE_ADDITIONAL_FIELDS
-
-
-def gettext_noop(message):
-    """Mark a string for makemessages, like django.utils.translation's.
-
-    That one reads settings.USE_I18N: called from here, it makes Django build
-    its settings out of this half-executed module, and an ImproperlyConfigured
-    raised further down (S3, BLOB_ENCRYPTION) then surfaces under manage.py as
-    an unrelated AttributeError instead of its own message.
-    """
-    return message
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -112,7 +100,6 @@ SHARED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.postgres",
     "import_export",
     "django_celery_beat",
     "corsheaders",
@@ -268,6 +255,7 @@ LOCALE_PATHS = [
 TIME_ZONE = os.getenv("DEFAULT_TIME_ZONE", "UTC")
 
 USE_I18N = True
+USE_L10N = True
 
 USE_TZ = True
 
@@ -286,8 +274,6 @@ LANGUAGES = (
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
-
-STATICFILES_DIRS = [BASE_DIR / "core/static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -312,19 +298,10 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "password_reset": "3/min",
-        "password_reset_confirm": "10/min",
         "verification_code": "3/min",
         "verification_code_ip": "10/min",
         "anonymous_token": "5/min",
         "openid": "10/min",
-        "email_verify": "10/min",
-        "email_verify_code": "10/min",
-        # Sign-ups are capped per minute and per day. The daily cap is what
-        # actually blocks mass account creation; it stays loose enough for the
-        # legitimate case of several patients registering behind one NAT.
-        "registration": "5/min",
-        "registration_day": "50/day",
-        "registration_identifier": "3/min",
     },
 }
 
@@ -459,18 +436,6 @@ LOCATION_FIELD = {
     "provider.openstreetmap.max_zoom": 18,
 }
 
-# Geocoding. The public Nominatim instance is free, but its usage policy caps
-# use at one request per second, which makes bulk imports crawl. Pointing these
-# at a private instance lifts both the cap and the dependency on a third party.
-# Either the instance root or its /search endpoint may be given.
-NOMINATIM_URL = os.getenv(
-    "NOMINATIM_URL", "https://nominatim.openstreetmap.org/search"
-)
-NOMINATIM_USER_AGENT = os.getenv("NOMINATIM_USER_AGENT", "HCW-Home/1.0")
-# Celery rate limit syntax ("1/s", "20/s", "600/m"). Empty means no limit at
-# all, which only ever makes sense on an instance you own.
-NOMINATIM_RATE_LIMIT = os.getenv("NOMINATIM_RATE_LIMIT", "1/s") or None
-
 REDIS_HOST = os.getenv("REDIS_HOST") or "127.0.0.1"
 REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
 
@@ -499,15 +464,7 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
         "KEY_FUNCTION": "django_tenants.cache.make_key",
         "REVERSE_KEY_FUNCTION": "django_tenants.cache.reverse_key",
-    },
-    # State belonging to a shared external resource rather than to a tenant,
-    # such as the Nominatim backoff. Keys are not prefixed by the schema, and
-    # this always goes to Redis so that every worker process sees the same
-    # value: Celery needs Redis anyway.
-    "shared": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}",
-    },
+    }
 }
 STATIC_ROOT = os.getenv("STATIC_ROOT", "statics")
 
@@ -538,13 +495,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# manage.py loads this module a second time when the first attempt raised
-# ImproperlyConfigured, and a second initialize_app() would then fail with a
-# message hiding the real configuration error.
-try:
-    FIREBASE_APP = get_app()
-except ValueError:
-    FIREBASE_APP = initialize_app()
+FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
     "ONE_DEVICE_PER_USER": False,
@@ -561,23 +512,11 @@ WEBPUSH_VAPID_CLAIMS_EMAIL = os.getenv(
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
-# channels_redis waits for messages with a blocking BZPOPMIN whose server-side
-# timeout is 5s (RedisChannelLayer.brpop_timeout). Since redis-py 8.0 the client
-# defaults to a 5s socket_timeout, so the socket read aborts at the exact moment
-# Redis is about to answer, raising "Timeout reading from <host>" on every idle
-# websocket. Keep the socket timeout well above the blocking timeout.
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                {
-                    "host": REDIS_HOST,
-                    "port": int(REDIS_PORT),
-                    "socket_timeout": 30,
-                    "socket_connect_timeout": 5,
-                }
-            ],
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
         },
     },
 }
@@ -593,8 +532,6 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 # Unfold Admin Configuration
 UNFOLD = {
     "SHOW_LANGUAGES": True,
-    # Unfold dropped its django-modeltranslation tab styling in 0.104
-    "STYLES": [lambda request: static("css/modeltranslation-tabs.css")],
     "SITE_TITLE": _("HCW@Home Admin"),
     "SITE_HEADER": _("HCW@Home Administration"),
     "SITE_URL": "/",
@@ -984,13 +921,6 @@ CONSTANCE_CONFIG = {
             "Default duration in minutes for an appointment without an explicit end time"
         ),
     ),
-    "disable_presence_confirmation": (
-        False,
-        gettext_noop(
-            "Never ask participants to confirm their presence: appointment "
-            "invitations and updates are still sent, without the confirmation request"
-        ),
-    ),
     "enable_appointment_outcome_detection": (
         True,
         gettext_noop(
@@ -1009,11 +939,10 @@ CONSTANCE_CONFIG = {
             "Hours after closure before a follow-up is automatically deleted (0 to disable)"
         ),
     ),
-    "auto_close_temporary_consultations_minutes": (
-        60,
+    "auto_close_temporary_consultations": (
+        True,
         gettext_noop(
-            "Minutes after the appointment join window closes before a temporary "
-            "appointment-chat consultation is automatically closed (0 to disable)"
+            "Automatically close temporary appointment-chat consultations once the appointment join window has elapsed"
         ),
     ),
     "temporary_user_auto_delete": (
@@ -1056,12 +985,6 @@ CONSTANCE_CONFIG = {
         ),
         "patient_visibility_select",
     ),
-    "patient_visibility_requires_confirmation": (
-        False,
-        gettext_noop(
-            "When a practitioner requests access to a patient hidden from another organization, require the patient to confirm by link before the organization can see their profile. When disabled, access is granted immediately."
-        ),
-    ),
     "enable_video_recording": (
         False,
         gettext_noop("Enable video recording during appointments"),
@@ -1083,17 +1006,6 @@ CONSTANCE_CONFIG = {
         False,
         gettext_noop(
             "Allow unauthenticated access to the organisations and reasons endpoints"
-        ),
-    ),
-    "nominatim_url": (
-        NOMINATIM_URL,
-        gettext_noop(
-            "Nominatim instance turning practitioner and organisation addresses "
-            "into map coordinates. Either the root URL of the instance or its "
-            "/search endpoint. Defaults to the NOMINATIM_URL environment "
-            "variable, which is used again if this field is left empty. How "
-            "fast it may be queried stays set by NOMINATIM_RATE_LIMIT, as the "
-            "geocoding workers are shared by every tenant."
         ),
     ),
     "force_temporary_patients": (
@@ -1307,11 +1219,10 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "appointment_early_join_minutes",
         "call_limit_join_minutes",
         "default_appointment_duration_in_minutes",
-        "disable_presence_confirmation",
         "enable_appointment_outcome_detection",
         "appointment_outcome_lookback_days",
     ),
-    gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations_minutes", "temporary_user_auto_delete"),
+    gettext_noop("Data Retention"): ("consultation_auto_delete_hours", "auto_close_temporary_consultations", "temporary_user_auto_delete"),
     gettext_noop("Security"): ("temporary_participant_token_expiry_hours", "instance_signature"),
     gettext_noop("Mobile App"): (
         "enable_deeplink",
@@ -1321,9 +1232,8 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "mobile_ios_store_url",
     ),
     gettext_noop("Uploads"): ("max_upload_size_mb",),
-    gettext_noop("Geocoding"): ("nominatim_url",),
     gettext_noop("Authentication"): ("disable_password_login", "enable_patient_password_login", "enable_registration"),
-    gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "patient_visibility_requires_confirmation", "public_organisations"),
+    gettext_noop("Visibility"): ("users_visibility", "patient_visibility", "public_organisations"),
     gettext_noop("Video Features"): (
         "primary_video_provider",
         "enable_video_recording",
@@ -1393,13 +1303,6 @@ CONSTANCE_FIELDSET_DESCRIPTIONS = {
     ),
     gettext_noop("Uploads"): gettext_noop(
         "Maximum file size accepted for message attachments."
-    ),
-    gettext_noop("Geocoding"): gettext_noop(
-        "Which Nominatim instance turns addresses into the coordinates the "
-        "patient map is built on. Defaults to the NOMINATIM_URL env var, and "
-        "to the public OpenStreetMap instance when that is unset — the public "
-        "one is capped at one request per second, so a large user base is "
-        "better served by your own."
     ),
     gettext_noop("Authentication"): gettext_noop(
         "Toggles for password-based login and self-service registration. "
@@ -1646,15 +1549,6 @@ if _s3_missing and len(_s3_missing) < len(_S3_REQUIRED):
         % (", ".join(_s3_missing), ", ".join(_S3_REQUIRED))
     )
 
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
 if not _s3_missing:
     STORAGES = {
         "default": {
@@ -1681,54 +1575,6 @@ if not _s3_missing:
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
-# Encryption at rest of confidential uploads (message attachments), on top of
-# either storage above. Logos, speciality icons and profile pictures are linked
-# to by URL and stay in clear. Rollout, key rotation and rollback are described
-# in consultations/management/commands/encrypt_blobs.py.
-BLOB_ENCRYPTION = os.getenv("BLOB_ENCRYPTION", "False") == "True"
-# When off, files are still decrypted on read but written in clear: the step
-# that lets encryption be rolled out, or back, without downtime. Unset or
-# empty (as docker-compose.yml passes it), it follows BLOB_ENCRYPTION.
-BLOB_ENCRYPT_WRITES = (
-    os.getenv("BLOB_ENCRYPT_WRITES") or str(BLOB_ENCRYPTION)
-) == "True"
-BLOB_ENCRYPTION_KEY = os.getenv("BLOB_ENCRYPTION_KEY", "")
-# The previous key, still accepted on read while encrypt_blobs re-encrypts the
-# files written under it.
-BLOB_ENCRYPTION_OLD_KEY = os.getenv("BLOB_ENCRYPTION_OLD_KEY", "")
-
-if BLOB_ENCRYPT_WRITES and not BLOB_ENCRYPTION:
-    raise ImproperlyConfigured(
-        "BLOB_ENCRYPT_WRITES=True requires BLOB_ENCRYPTION=True, otherwise "
-        "nothing gets encrypted."
-    )
-
-if BLOB_ENCRYPTION:
-    # No fallback on DJANGOSECRET_KEY: it also signs sessions and defaults to
-    # a placeholder in docker-compose.yml. Files encrypted with it would only
-    # look protected, which is worse than knowing they are not.
-    if len(BLOB_ENCRYPTION_KEY) < 32:
-        raise ImproperlyConfigured(
-            "BLOB_ENCRYPTION=True requires BLOB_ENCRYPTION_KEY, at least 32 "
-            "characters long."
-        )
-    if BLOB_ENCRYPTION_KEY == SECRET_KEY:
-        raise ImproperlyConfigured(
-            "BLOB_ENCRYPTION_KEY must not be the same as DJANGOSECRET_KEY."
-        )
-    if BLOB_ENCRYPTION_OLD_KEY == BLOB_ENCRYPTION_KEY:
-        raise ImproperlyConfigured(
-            "BLOB_ENCRYPTION_OLD_KEY is the current key: set it to the "
-            "previous one, or leave it empty."
-        )
-    STORAGES["default"] = {
-        "BACKEND": "core.storage.EncryptedStorage",
-        "OPTIONS": {
-            "backend": STORAGES["default"]["BACKEND"],
-            "options": STORAGES["default"].get("OPTIONS", {}),
         },
     }
 

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon, IonSpinner } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -50,8 +50,6 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     this.whereQuery.set(value ?? '');
   }
 
-  // Renaming this output would change the component's public API; unrelated to a11y work.
-  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() search = new EventEmitter<SearchQuery>();
   // A practitioner suggestion is a direct hit: the host decides whether that
   // opens their profile or starts a booking.
@@ -60,11 +58,6 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private suggestInput$ = new Subject<string>();
   private specialitiesLoaded = false;
-
-  // Kept so clearing a field can hand the caret straight back to it.
-  private host = inject(ElementRef<HTMLElement>);
-  private whoInput = viewChild<ElementRef<HTMLInputElement>>('whoInput');
-  private whereInput = viewChild<ElementRef<HTMLInputElement>>('whereInput');
 
   whoQuery = signal('');
   whereQuery = signal('');
@@ -125,36 +118,6 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   onWhoFocus(): void {
     this.loadSpecialitiesOnce();
     this.suggestOpen.set(true);
-  }
-
-  // Emptying the term drops the practitioner and facility hits it produced;
-  // the panel stays open on the plain speciality picker.
-  clearWho(): void {
-    this.whoQuery.set('');
-    this.suggestPractitioners.set([]);
-    this.suggestOrganisations.set([]);
-    this.suggestInput$.next('');
-    this.whoInput()?.nativeElement.focus();
-    this.suggestOpen.set(true);
-  }
-
-  clearWhere(): void {
-    this.whereQuery.set('');
-    this.whereInput()?.nativeElement.focus();
-  }
-
-  /* Suggestions close when the pointer goes elsewhere, rather than through a
-   * full-screen backdrop element. A backdrop swallows the first click anywhere
-   * on the page, so the user has to click twice to reach anything — and it
-   * only ever worked for pointer users. Escape and choosing a suggestion close
-   * it too. */
-  @HostListener('document:pointerdown', ['$event'])
-  onDocumentPointerDown(event: Event): void {
-    if (!this.suggestOpen()) return;
-    const target = event.target;
-    if (target instanceof Node && !this.host.nativeElement.contains(target)) {
-      this.closeSuggestions();
-    }
   }
 
   closeSuggestions(): void {

@@ -15,14 +15,12 @@ import {
   IOpenIDLoginBody,
 } from '../models/admin-auth';
 import { RoutePaths } from '../constants/routes';
-import { PendingActionService } from './pending-action.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Auth {
   http: HttpClient = inject(HttpClient);
-  private pendingActionService = inject(PendingActionService);
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(
     this.isLoggedIn()
   );
@@ -82,8 +80,6 @@ export class Auth {
   }
 
   async logout(): Promise<void> {
-    // A link followed but never opened must not resurface at the next login.
-    this.pendingActionService.clear();
     const refresh = this.getRefreshToken();
     if (refresh) {
       try {

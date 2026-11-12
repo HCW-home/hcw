@@ -1,20 +1,20 @@
 <app-header [pageTitle]="'newRequest.newRequest' | translate"></app-header>
 
-<ion-content id="main-content" role="main" class="new-request-content">
+<ion-content class="new-request-content">
   <div class="main-content">
     <!-- Wizard chrome: back and progress. Lives inside the content so the page
          keeps the same shell (branded header + footer) as the rest of the app
          instead of hijacking the toolbar. The step title is not repeated here:
          every step already renders it as its own heading. -->
     <div class="wizard-bar">
-      <button class="page-back-button" type="button" (click)="goBack()" [attr.aria-label]="'common.back' | translate">
-        <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+      <button class="wizard-back" type="button" (click)="goBack()" [attr.aria-label]="'common.back' | translate">
+        <ion-icon name="arrow-back-outline"></ion-icon>
       </button>
       <div class="wizard-progress">
         <span class="wizard-progress-fill" [style.width.%]="progress() * 100"></span>
       </div>
       <button class="wizard-cancel" type="button" (click)="confirmCancel()">
-        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+        <ion-icon name="close-outline"></ion-icon>
         <span>{{ 'newRequest.cancelRequest' | translate }}</span>
       </button>
     </div>
@@ -61,7 +61,7 @@
                     </div>
                   } @else if (searchResults().length === 0) {
                     <div class="empty-state">
-                      <ion-icon name="business-outline" aria-hidden="true"></ion-icon>
+                      <ion-icon name="business-outline"></ion-icon>
                       <span>{{ 'map.noResults' | translate }}</span>
                     </div>
                   } @else {
@@ -96,18 +96,18 @@
             <p class="step-description">{{ 'newRequest.selectReasonDesc' | translate }}</p>
             <div class="reason-list">
               @for (reason of reasons(); track reason.id) {
-                <button type="button" class="reason-item" (click)="selectReason(reason)">
+                <div class="reason-item" (click)="selectReason(reason)">
                   <div class="reason-icon">
-                    <ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>
+                    <ion-icon name="clipboard-outline"></ion-icon>
                   </div>
                   <div class="reason-details">
                     <p class="reason-name">{{ reason.name }}</p>
                     <p class="reason-type">
                       @if (reason.assignment_method === 'appointment') {
-                        <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+                        <ion-icon name="calendar-outline"></ion-icon>
                         {{ 'newRequest.scheduled' | translate }}
                       } @else {
-                        <ion-icon name="flash-outline" aria-hidden="true"></ion-icon>
+                        <ion-icon name="flash-outline"></ion-icon>
                         {{ 'newRequest.immediate' | translate }}
                       }
                       @if (reason.duration) {
@@ -115,13 +115,13 @@
                       }
                     </p>
                   </div>
-                  <ion-icon name="chevron-forward-outline" class="reason-arrow" aria-hidden="true"></ion-icon>
-                </button>
+                  <ion-icon name="chevron-forward-outline" class="reason-arrow"></ion-icon>
+                </div>
               }
             </div>
             @if (reasons().length === 0) {
               <div class="empty-state">
-                <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+                <ion-icon name="information-circle-outline"></ion-icon>
                 <span>{{ 'newRequest.noReasons' | translate }}</span>
               </div>
             }
@@ -134,11 +134,9 @@
             <p class="step-description">{{ 'newRequest.selectDoctorDesc' | translate }}</p>
             <div class="doctors-list">
               @for (doctor of doctors(); track doctor.id) {
-                <button
-                  type="button"
+                <div
                   class="doctor-card"
                   [class.selected]="isDoctorSelected(doctor)"
-                  [attr.aria-pressed]="isDoctorSelected(doctor)"
                   (click)="selectDoctor(doctor)">
                   <ion-card-content>
                     <div class="doctor-info">
@@ -157,12 +155,12 @@
                       </div>
                     </div>
                   </ion-card-content>
-                </button>
+                </div>
               }
             </div>
             @if (doctors().length === 0) {
               <div class="empty-state">
-                <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+                <ion-icon name="information-circle-outline"></ion-icon>
                 <span>{{ 'newRequest.noDoctors' | translate }}</span>
               </div>
             }
@@ -187,14 +185,12 @@
             <p class="step-description">{{ 'newRequest.selectTimeSlotDesc' | translate }}</p>
 
             <div class="week-navigation">
-              <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()"
-                          [attr.aria-label]="'newRequest.previousWeek' | translate">
-                <ion-icon name="chevron-back-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+              <ion-button fill="clear" (click)="previousWeek()" [disabled]="!canGoPreviousWeek()">
+                <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
               </ion-button>
               <span class="week-label">{{ formatDisplayDate(weekDates()[0]) }} - {{ formatDisplayDate(weekDates()[weekDates().length - 1]) }}</span>
-              <ion-button fill="clear" (click)="nextWeek()"
-                          [attr.aria-label]="'newRequest.nextWeek' | translate">
-                <ion-icon name="chevron-forward-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+              <ion-button fill="clear" (click)="nextWeek()">
+                <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
               </ion-button>
             </div>
 
@@ -243,48 +239,23 @@
             <h2 class="step-title">{{ 'newRequest.signInToContinue' | translate }}</h2>
             <p class="step-description">{{ 'newRequest.signInToContinueDesc' | translate }}</p>
 
-            <!-- The form is hosted here rather than on /login: leaving the
-                 wizard for another page would drop the request being built. -->
-            @if (authMode(); as mode) {
-              <div class="auth-panel">
-                <div class="auth-panel-head">
-                  <h3>
-                    {{ (mode === 'register' ? 'newRequest.registerTitle' : 'newRequest.loginTitle') | translate }}
-                  </h3>
-                  <button type="button" class="auth-panel-back" (click)="clearAuthMode()">
-                    {{ 'common.back' | translate }}
-                  </button>
-                </div>
-                <app-auth-form
-                  [mode]="mode"
-                  [showModeSwitch]="registrationEnabled()"
-                  (authenticated)="onAuthenticated()"
-                  (modeChange)="setAuthMode($event)"
-                  (forgotPassword)="goToForgotPassword($event)">
-                </app-auth-form>
+            <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
+              <div class="choice-card" (click)="goToLogin()">
+                <ion-icon name="log-in-outline"></ion-icon>
+                <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
+                <p>{{ 'newRequest.loginDesc' | translate }}</p>
+                <button class="primary-action">{{ 'login.title' | translate }}</button>
               </div>
-            } @else {
-              <div class="choice-cards" [class.single-choice]="!registrationEnabled()">
-                <!-- The card is no longer the click target: each one already
-                     holds a real button doing the same thing, and nesting
-                     buttons is invalid HTML. The action moved onto them. -->
-                <div class="choice-card">
-                  <ion-icon name="log-in-outline" aria-hidden="true"></ion-icon>
-                  <h3>{{ 'newRequest.loginTitle' | translate }}</h3>
-                  <p>{{ 'newRequest.loginDesc' | translate }}</p>
-                  <button type="button" class="primary-action" (click)="setAuthMode('login')">{{ 'login.title' | translate }}</button>
-                </div>
 
-                @if (registrationEnabled()) {
-                  <div class="choice-card">
-                    <ion-icon name="person-add-outline" aria-hidden="true"></ion-icon>
-                    <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
-                    <p>{{ 'newRequest.registerDesc' | translate }}</p>
-                    <button type="button" class="secondary-action" (click)="setAuthMode('register')">{{ 'login.signUp' | translate }}</button>
-                  </div>
-                }
-              </div>
-            }
+              @if (registrationEnabled()) {
+                <div class="choice-card" (click)="goToRegister()">
+                  <ion-icon name="person-add-outline"></ion-icon>
+                  <h3>{{ 'newRequest.registerTitle' | translate }}</h3>
+                  <p>{{ 'newRequest.registerDesc' | translate }}</p>
+                  <button class="secondary-action">{{ 'login.signUp' | translate }}</button>
+                </div>
+              }
+            </div>
           </div>
         }
 
@@ -301,7 +272,7 @@
                   @if (selectedSpeciality()?.icon) {
                     <img [src]="selectedSpeciality()?.icon" [alt]="selectedSpeciality()?.name" class="review-speciality-icon-img">
                   } @else {
-                    <ion-icon name="medical-outline" aria-hidden="true"></ion-icon>
+                    <ion-icon name="medical-outline"></ion-icon>
                   }
                 </div>
                 <div class="review-details">
@@ -312,7 +283,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>
+                  <ion-icon name="clipboard-outline"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.reason' | translate }}</p>
@@ -322,7 +293,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                  <ion-icon name="time-outline"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.preferredTime' | translate }}</p>
@@ -332,7 +303,7 @@
 
               <div class="review-item">
                 <div class="review-icon">
-                  <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+                  <ion-icon name="person-outline"></ion-icon>
                 </div>
                 <div class="review-details">
                   <p class="review-label">{{ 'newRequest.preferredDoctor' | translate }}</p>
@@ -346,27 +317,21 @@
                 <h3 class="review-title">{{ 'newRequest.additionalInfo' | translate }}</h3>
                 @for (field of customFields(); track field.id) {
                   <div class="custom-field-item">
-                    <label class="custom-field-label" [attr.for]="'custom-field-' + field.id"
-                           [attr.id]="'custom-field-' + field.id + '-label'">
+                    <label class="custom-field-label">
                       {{ field.name }}
                       @if (field.required) {
-                        <span class="required-mark" aria-hidden="true">*</span>
-                        <span class="sr-only">{{ 'common.required' | translate }}</span>
+                        <span class="required-mark">*</span>
                       }
                     </label>
                     @switch (field.field_type) {
                       @case ('short_text') {
                         <input type="text" class="custom-field-input"
-                          [id]="'custom-field-' + field.id"
                           [placeholder]="field.name"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('long_text') {
-                        <!-- The .custom-field-label above already names this
-                             control, so no second label inside the box. -->
                         <ion-textarea
-                          [attr.aria-labelledby]="'custom-field-' + field.id + '-label'"
                           [placeholder]="field.name"
                           [rows]="3"
                           [(ngModel)]="customFieldValues[field.id]"
@@ -375,20 +340,17 @@
                       }
                       @case ('date') {
                         <input type="date" class="custom-field-input"
-                          [id]="'custom-field-' + field.id"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('number') {
                         <input type="number" class="custom-field-input"
-                          [id]="'custom-field-' + field.id"
                           [placeholder]="field.name"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                       }
                       @case ('list') {
                         <select class="custom-field-input"
-                          [id]="'custom-field-' + field.id"
                           [required]="field.required"
                           [(ngModel)]="customFieldValues[field.id]">
                           <option value="">--</option>
@@ -404,14 +366,8 @@
             }
 
             <div class="comment-section">
-              <!-- Associated through aria-labelledby on the control, not for/id: Ionic
-                   generates its own id for the inner native input and offers no way to
-                   set it, so a for attribute here would point at nothing. -->
-              <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
-              <label class="field-label" id="new-request-comment-label">{{ 'newRequest.symptomLabel' | translate }}</label>
               <ion-textarea
                 [(ngModel)]="comment"
-                aria-labelledby="new-request-comment-label"
                 [placeholder]="'newRequest.symptomPlaceholder' | translate"
                 [rows]="4"
                 class="comment-input">

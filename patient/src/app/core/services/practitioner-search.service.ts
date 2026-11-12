@@ -50,27 +50,10 @@ export class PractitionerSearchService {
     if (query.hasSlots) {
       params['has_slots'] = true;
     }
-    if (query.bounds) {
-      params['lat_min'] = query.bounds.latMin.toFixed(6);
-      params['lat_max'] = query.bounds.latMax.toFixed(6);
-      params['lng_min'] = query.bounds.lngMin.toFixed(6);
-      params['lng_max'] = query.bounds.lngMax.toFixed(6);
-    }
 
     return this.api
       .get<{ organisations: SearchOrganisation[]; practitioners: SearchDoctor[] }>('/map/', params)
       .pipe(map(response => this.buildItems(response?.organisations, response?.practitioners)));
-  }
-
-  /**
-   * One practitioner as a search item, so a link straight to their sheet can
-   * render the same card as a search would have produced.
-   */
-  getDoctorItem(pk: number): Observable<SearchItem | null> {
-    return this.api.get<SearchDoctor>(`/practitioners/${pk}/public/`).pipe(
-      map(doc => (doc ? this.buildItems([], [doc])[0] ?? null : null)),
-      catchError(() => of(null)),
-    );
   }
 
   buildItems(orgs: SearchOrganisation[] = [], docs: SearchDoctor[] = []): SearchItem[] {

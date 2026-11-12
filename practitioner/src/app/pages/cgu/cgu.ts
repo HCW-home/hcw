@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { Subject, takeUntil, switchMap, forkJoin, of } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { UserService } from '../../core/services/user.service';
@@ -25,7 +24,6 @@ import { TypographyTypeEnum } from '../../shared/constants/typography';
 })
 export class CguPage implements OnInit, OnDestroy {
   private router = inject(Router);
-  private actionHandler = inject(ActionHandlerService);
   private userService = inject(UserService);
   private termsService = inject(TermsService);
   private authService = inject(Auth);
@@ -102,12 +100,7 @@ export class CguPage implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          // The link that started the login is replayed here: a gate crossed
-          // on the way in cancelled its navigation, and the action waited for
-          // this page to clear.
-          if (!this.actionHandler.runPendingAction()) {
-            this.router.navigate([`/${RoutePaths.USER}`]);
-          }
+          this.router.navigate([`/${RoutePaths.USER}`]);
         },
         error: () => {
           this.accepting = false;

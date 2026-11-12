@@ -6,6 +6,7 @@ import {
   IonContent,
   IonList,
   IonItem,
+  IonLabel,
   IonIcon,
   IonText,
   IonInput,
@@ -48,6 +49,7 @@ interface ProfileMenuItem {
     IonContent,
     IonList,
     IonItem,
+    IonLabel,
     IonIcon,
     IonText,
     IonInput,
@@ -198,8 +200,6 @@ export class ProfilePage implements OnInit {
 
   async confirmChangeServer() {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('profile.confirmChangeServerTitle'),
       message: this.t.instant('profile.confirmChangeServerMessage', {
         host: this.deeplinkService.getActiveHost() ?? '',
@@ -231,8 +231,6 @@ export class ProfilePage implements OnInit {
 
   async promptEncryptionLoad() {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('profile.encryptionLoadKey'),
       message: this.t.instant('profile.encryptionLoadKeyMessage'),
       inputs: [
@@ -282,8 +280,6 @@ export class ProfilePage implements OnInit {
     try {
       const response = await this.encryptionService.forgotPassphrase();
       const alert = await this.alertCtrl.create({
-        // Confirmation dialogs must be answered, not dismissed by a stray click.
-        backdropDismiss: false,
         header: this.t.instant('profile.encryptionNewPassphraseTitle'),
         message: `${this.t.instant('profile.encryptionNewPassphraseMessage')}\n\n${response.passphrase}`,
         buttons: [{ text: this.t.instant('common.ok') }],
@@ -296,8 +292,6 @@ export class ProfilePage implements OnInit {
 
   async confirmEncryptionPurge() {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('profile.encryptionPurgeKey'),
       message: this.t.instant('profile.encryptionPurgeConfirm'),
       buttons: [
@@ -320,8 +314,6 @@ export class ProfilePage implements OnInit {
 
   async promptEncryptionChange() {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('profile.encryptionChangePassphrase'),
       inputs: [
         {
@@ -397,8 +389,6 @@ export class ProfilePage implements OnInit {
 
   async confirmLogout() {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('profile.confirmLogout'),
       message: this.t.instant('profile.confirmLogoutMessage'),
       buttons: [

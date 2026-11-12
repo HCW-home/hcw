@@ -1,24 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Q
-from django_filters.rest_framework import (
-    BaseInFilter,
-    BooleanFilter,
-    FilterSet,
-    NumberFilter,
-)
+from django_filters.rest_framework import BooleanFilter, FilterSet
 
 User = get_user_model()
 
 
-class NumberInFilter(BaseInFilter, NumberFilter):
-    """Comma-separated list of numbers, rejected as a 400 when malformed."""
-
-
 class UserFilter(FilterSet):
-    # Comma-separated primary keys, so a saved selection of users can be
-    # restored in a single request instead of listing the whole directory.
-    id_in = NumberInFilter(field_name="id")
     has_group_permissions = BooleanFilter(method="filter_has_group_permissions")
     is_practitioner = BooleanFilter(field_name="is_practitioner")
     has_slots = BooleanFilter(method="filter_has_slots")

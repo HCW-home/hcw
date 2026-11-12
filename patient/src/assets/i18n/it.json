@@ -62,8 +62,7 @@
     "emailLabel": "E-mail",
     "phoneNumber": "Numero di telefono",
     "phonePlaceholder": "Inserisci il numero di telefono",
-    "communicationMethod": "Metodo di comunicazione",
-    "changePhoto": "Cambia foto profilo"
+    "communicationMethod": "Metodo di comunicazione"
   },
   "messageList": {
     "messages": "Messaggi",
@@ -79,14 +78,7 @@
     "typePlaceholder": "Digita un messaggio...",
     "today": "Oggi",
     "yesterday": "Ieri",
-    "unreadMessages": "Messaggi non letti",
-    "openImage": "Apri l'immagine {{name}}",
-    "downloadAttachment": "Scarica {{name}}",
-    "editMessage": "Modifica messaggio",
-    "deleteMessage": "Elimina messaggio",
-    "removeFile": "Rimuovi file",
-    "attachFile": "Allega un file",
-    "send": "Invia messaggio"
+    "unreadMessages": "Messaggi non letti"
   },
   "preJoinLobby": {
     "settingUp": "Configurazione dei dispositivi...",
@@ -157,9 +149,6 @@
     "didntReceive": "Non hai ricevuto il codice?",
     "sending": "Invio in corso...",
     "resendCode": "Reinvia il codice",
-    "resendCodeIn": "Reinvia il codice ({{seconds}} s)",
-    "codeExpired": "Questo codice è scaduto. Richiedine uno nuovo.",
-    "tooManyRequests": "Troppe richieste. Attendi un momento prima di richiedere un nuovo codice.",
     "havingTrouble": "Hai riscontrato problemi?",
     "noAuthToken": "Nessun token di autenticazione fornito",
     "invalidToken": "Token di autenticazione non valido o scaduto",
@@ -178,7 +167,6 @@
     "loading": "Caricamento...",
     "cancel": "Cancellare",
     "close": "Chiudi",
-    "clear": "Cancella",
     "back": "Indietro",
     "save": "Salva",
     "error": "Errore",
@@ -197,18 +185,15 @@
     "appNeedsReload": "L'applicazione deve essere ricaricata per continuare",
     "reload": "Ricaricare",
     "offline": "Connessione al server persa",
-    "reconnecting": "Connessione al server persa. Riconnessione in corso...",
-    "required": "obbligatorio",
-    "language": "Lingua",
-    "skipToContent": "Vai al contenuto principale",
-    "previous": "Precedente",
-    "next": "Successivo"
+    "reconnecting": "Connessione al server persa. Riconnessione in corso..."
   },
   "login": {
     "title": "Registrazione",
     "subtitle": "Accedi al tuo account",
     "platformDescription": "La tua piattaforma di telemedicina sicura per consultazioni a distanza con il tuo medico.",
+    "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Password",
+    "emailRequired": "È richiesto un indirizzo email valido",
     "passwordMinLength": "La password deve essere lunga almeno 6 caratteri.",
     "forgotPassword": "Ha dimenticato la password?",
     "noAccount": "Non hai un account?",
@@ -224,37 +209,31 @@
     "verifyCode": "Verifica il codice",
     "codeSentTo": "Un codice di verifica è stato inviato al tuo indirizzo email.",
     "resendCode": "Reinvia il codice",
-    "resendCodeIn": "Reinvia il codice ({{seconds}} s)",
-    "codeExpired": "Questo codice è scaduto. Richiedine uno nuovo.",
-    "tooManyRequests": "Troppe richieste. Attendi un momento prima di richiedere un nuovo codice.",
     "didntReceiveCode": "Non hai ricevuto il codice?",
     "backToEmail": "Modifica",
     "tooManyAttempts": "Troppi tentativi. Richiedi un nuovo codice.",
     "invalidVerificationCode": "Codice di verifica non valido.",
     "codeSent": "Codice di verifica inviato.",
-    "genericError": "Si è verificato un errore. Riprova.",
-    "identifierPlaceholder": "Email o numero di telefono",
-    "identifierRequired": "Inserisci un indirizzo email o un numero di telefono valido",
-    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
-    "showPassword": "Mostra password",
-    "hidePassword": "Nascondi password",
-    "identifierLabel": "E-mail o numero di telefono",
-    "passwordLabel": "Password",
-    "verificationCodeLabel": "Codice di verifica"
+    "genericError": "Si è verificato un errore. Riprova."
   },
   "register": {
     "platformDescription": "Crea il tuo account e inizia oggi stesso le tue consulenze di telemedicina.",
     "title": "Creare un account",
     "subtitle": "Registrati per iniziare",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "firstNameRequired": "È richiesto il nome di battesimo",
+    "emailPlaceholder": "E-mail",
+    "emailInvalid": "Inserisci un indirizzo email valido.",
+    "passwordPlaceholder": "Password",
+    "passwordMinLength": "La password deve essere lunga almeno 8 caratteri.",
+    "confirmPassword": "Conferma password",
+    "passwordsMismatch": "Le password non corrispondono",
     "registrationDisabled": "La registrazione è attualmente disabilitata.",
     "hasAccount": "Hai già un account?",
     "creatingAccount": "Creazione dell'account in corso...",
-    "registrationFailed": "Registrazione non riuscita. Riprova.",
-    "identifierPlaceholder": "Email o numero di telefono",
-    "identifierHelp": "Ti invieremo un codice a 6 cifre per confermarlo.",
-    "identifierInvalid": "Inserisci un indirizzo email o un numero di telefono valido",
-    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
-    "identifierLabel": "E-mail o numero di telefono"
+    "verificationEmailSent": "Un'email di verifica è stata inviata al tuo indirizzo email.",
+    "registrationFailed": "Registrazione non riuscita. Riprova."
   },
   "forgotPassword": {
     "title": "Ha dimenticato la password?",
@@ -283,6 +262,14 @@
     "resetFailed": "Impossibile reimpostare la password. Riprova.",
     "linkExpired": "Il link di reimpostazione è scaduto o non è valido.",
     "invalidResetLink": "Collegamento di ripristino non valido"
+  },
+  "verifyEmail": {
+    "title": "Verifica dell'e-mail",
+    "verifying": "Verifica del tuo indirizzo email in corso...",
+    "success": "Il tuo indirizzo email è stato verificato con successo.",
+    "goToLogin": "Vai al login",
+    "invalidLink": "Collegamento di verifica non valido o mancante.",
+    "verificationFailed": "Verifica dell'indirizzo email non riuscita. Il link potrebbe essere non valido o scaduto."
   },
   "home": {
     "nextAppointment": "Prossimo appuntamento",
@@ -321,8 +308,7 @@
     "appointmentNotFound": "Appuntamento non trovato",
     "failedToLoadParticipant": "Impossibile caricare le informazioni del partecipante",
     "statusCompleted": "Effettuato",
-    "statusNoshow": "Non effettuato",
-    "title": "Home"
+    "statusNoshow": "Non effettuato"
   },
   "newRequest": {
     "selectSpecialty": "Seleziona Specialità",
@@ -373,10 +359,7 @@
     "cancelConfirmTitle": "Annullare la richiesta?",
     "cancelConfirmMessage": "Le informazioni inserite andranno perse.",
     "cancelConfirmStay": "Continua la richiesta",
-    "cancelConfirmLeave": "Esci",
-    "symptomLabel": "Descrivi i tuoi sintomi",
-    "previousWeek": "Settimana precedente",
-    "nextWeek": "Settimana successiva"
+    "cancelConfirmLeave": "Esci"
   },
   "incomingCall": {
     "isCalling": "sta chiamando...",
@@ -492,8 +475,6 @@
     "connectedToConsultation": "Collegato alla consultazione",
     "failedJoin": "Impossibile partecipare alla videochiamata",
     "failedToggleCamera": "Impossibile attivare/disattivare la fotocamera",
-    "backgroundBlur": "Sfocatura dello sfondo",
-    "failedToggleBackgroundBlur": "Impossibile modificare la sfocatura dello sfondo",
     "failedToggleMic": "Impossibile attivare/disattivare il microfono",
     "failedToggleScreen": "Impossibile attivare/disattivare la condivisione dello schermo",
     "switchingCamera": "Cambio fotocamera in corso...",
@@ -509,18 +490,7 @@
     "messageUpdated": "Messaggio aggiornato",
     "failedUpdate": "Impossibile aggiornare il messaggio",
     "messageDeleted": "Messaggio eliminato",
-    "failedDelete": "Impossibile eliminare il messaggio",
-    "microphone": "Microfono",
-    "camera": "Fotocamera",
-    "endCall": "Termina chiamata",
-    "screenShare": "Condividi schermo",
-    "switchCamera": "Cambia fotocamera",
-    "chatWithUnread": "Chat, {{count}} messaggi non letti",
-    "micMuted": "Microfono disattivato",
-    "cameraOff": "Fotocamera disattivata",
-    "participantJoined": "{{name}} è entrato nella consultazione",
-    "participantLeft": "{{name}} ha lasciato la consultazione",
-    "title": "Consulto video"
+    "failedDelete": "Impossibile eliminare il messaggio"
   },
   "videoCall": {
     "leaveCallTitle": "Uscire dalla videochiamata?",
@@ -546,8 +516,8 @@
     "resultsTitle": "Risultati",
     "typeDoctor": "Professionista",
     "typeOrganisation": "Struttura",
+    "noSlots": "Nessuna disponibilità",
     "bookButton": "Prenota un appuntamento",
-    "detailsButton": "Dettagli",
     "suggestSpecialities": "Specialità",
     "suggestPractitioners": "Professionisti",
     "suggestOrganisations": "Strutture",
@@ -561,39 +531,9 @@
   },
   "practitioner": {
     "notFound": "Professionista non trovato",
-    "backToResults": "Torna ai risultati",
     "organisation": "Organizzazione",
     "additionalInfo": "Informazioni aggiuntive",
     "contact": "Contatti",
     "profile": "Profilo"
-  },
-  "verifyAccount": {
-    "title": "Conferma il tuo account",
-    "identifierPlaceholder": "Email o numero di telefono",
-    "invalidIdentifier": "Inserisci un indirizzo email o un numero di telefono valido",
-    "phoneNeedsCountryCode": "Aggiungi il prefisso internazionale, ad esempio +39612345678",
-    "codeSentTo": "Inserisci il codice a 6 cifre che ti abbiamo appena inviato.",
-    "enterCode": "Inserisci il codice a 6 cifre",
-    "invalidCode": "Codice non valido o scaduto.",
-    "invalidCodeFormat": "Inserisci un codice valido a 6 cifre",
-    "verifyCode": "Conferma",
-    "didntReceiveCode": "Non hai ricevuto il codice?",
-    "resendCode": "Invia di nuovo il codice",
-    "resendCodeIn": "Invia di nuovo il codice ({{seconds}} s)",
-    "tooManyRequests": "Troppe richieste. Attendi un momento prima di richiedere un nuovo codice.",
-    "sendingCode": "Invio in corso...",
-    "codeSent": "Codice inviato.",
-    "sendFailed": "Impossibile inviare il codice. Riprova.",
-    "backToLogin": "Torna all'accesso"
-  },
-  "onboarding": {
-    "firstName": "Nome",
-    "lastName": "Cognome",
-    "email": "Email",
-    "password": "Password",
-    "passwordConfirm": "Conferma password",
-    "passwordOptional": "Facoltativa. Potrai sempre accedere con un codice.",
-    "passwordsMismatch": "Le password non corrispondono",
-    "passwordRejected": "Password rifiutata. Provane una più lunga."
   }
 }

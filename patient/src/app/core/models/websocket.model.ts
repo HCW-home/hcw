@@ -94,14 +94,7 @@ export interface UserMessageEvent {
 
 export interface NotificationEvent {
   type: 'notification';
-  event?: 'notification';
-  id?: number;
-  render_content_html: string;
-  render_subject: string;
-  access_link: string | null;
-  action_label: string | null;
-  action: string | null;
-  created_at: string;
+  data: Record<string, unknown>;
 }
 
 export interface SystemBroadcastEvent {

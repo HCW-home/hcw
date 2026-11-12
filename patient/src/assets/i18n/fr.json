@@ -8,7 +8,6 @@
     "cancel": "Annuler",
     "remove": "Retirer",
     "close": "Fermer",
-    "clear": "Effacer",
     "back": "Retour",
     "save": "Enregistrer",
     "error": "Erreur",
@@ -27,18 +26,15 @@
     "appNeedsReload": "L'application doit être rechargée pour continuer",
     "reload": "Recharger",
     "offline": "Connexion au serveur perdue",
-    "reconnecting": "Connexion au serveur perdue. Reconnexion en cours...",
-    "required": "obligatoire",
-    "language": "Langue",
-    "skipToContent": "Aller au contenu principal",
-    "previous": "Précédent",
-    "next": "Suivant"
+    "reconnecting": "Connexion au serveur perdue. Reconnexion en cours..."
   },
   "login": {
     "title": "Se connecter",
     "subtitle": "Connectez-vous à votre compte",
     "platformDescription": "Votre plateforme de télémédecine sécurisée pour des consultations à distance avec votre professionnel de santé.",
+    "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Mot de passe",
+    "emailRequired": "Un e-mail valide est requis",
     "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Vous n'avez pas de compte ?",
@@ -54,37 +50,31 @@
     "verifyCode": "Vérifier le code",
     "codeSentTo": "Un code de vérification a été envoyé à votre adresse e-mail.",
     "resendCode": "Renvoyer le code",
-    "resendCodeIn": "Renvoyer le code ({{seconds}} s)",
-    "codeExpired": "Ce code a expiré. Veuillez en demander un nouveau.",
-    "tooManyRequests": "Trop de demandes. Veuillez patienter un instant avant de demander un nouveau code.",
     "didntReceiveCode": "Vous n'avez pas reçu le code ?",
     "backToEmail": "Modifier",
     "tooManyAttempts": "Trop de tentatives. Veuillez demander un nouveau code.",
     "invalidVerificationCode": "Code de vérification invalide.",
     "codeSent": "Code de vérification envoyé.",
-    "genericError": "Une erreur est survenue. Veuillez réessayer.",
-    "identifierPlaceholder": "E-mail ou numéro de téléphone",
-    "identifierRequired": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
-    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678",
-    "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe",
-    "identifierLabel": "E-mail ou numéro de téléphone",
-    "passwordLabel": "Mot de passe",
-    "verificationCodeLabel": "Code de vérification"
+    "genericError": "Une erreur est survenue. Veuillez réessayer."
   },
   "register": {
     "platformDescription": "Créez votre compte et commencez vos consultations de télémédecine dès aujourd'hui.",
     "title": "Créer un compte",
     "subtitle": "Inscrivez-vous pour commencer",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "firstNameRequired": "Le prénom est requis",
+    "emailPlaceholder": "E-mail",
+    "emailInvalid": "Veuillez entrer un e-mail valide",
+    "passwordPlaceholder": "Mot de passe",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
+    "confirmPassword": "Confirmer le mot de passe",
+    "passwordsMismatch": "Les mots de passe ne correspondent pas",
     "registrationDisabled": "L'inscription est actuellement désactivée.",
     "hasAccount": "Vous avez déjà un compte ?",
     "creatingAccount": "Création du compte...",
-    "registrationFailed": "Échec de l'inscription. Veuillez réessayer.",
-    "identifierPlaceholder": "E-mail ou numéro de téléphone",
-    "identifierHelp": "Nous vous enverrons un code à 6 chiffres pour le confirmer.",
-    "identifierInvalid": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
-    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678",
-    "identifierLabel": "E-mail ou numéro de téléphone"
+    "verificationEmailSent": "Un e-mail de vérification a été envoyé à votre adresse.",
+    "registrationFailed": "Échec de l'inscription. Veuillez réessayer."
   },
   "forgotPassword": {
     "title": "Mot de passe oublié ?",
@@ -114,6 +104,14 @@
     "linkExpired": "Le lien de réinitialisation a expiré ou est invalide",
     "invalidResetLink": "Lien de réinitialisation invalide"
   },
+  "verifyEmail": {
+    "title": "Vérification de l'e-mail",
+    "verifying": "Vérification de votre adresse e-mail...",
+    "success": "Votre adresse e-mail a été vérifiée avec succès.",
+    "goToLogin": "Aller à la connexion",
+    "invalidLink": "Lien de vérification invalide ou manquant.",
+    "verificationFailed": "La vérification de l'e-mail a échoué. Le lien est peut-être invalide ou expiré."
+  },
   "verifyInvite": {
     "verifyingCode": "Vérification du code...",
     "authenticating": "Authentification...",
@@ -128,9 +126,6 @@
     "didntReceive": "Vous n'avez pas reçu le code ?",
     "sending": "Envoi...",
     "resendCode": "Renvoyer le code",
-    "resendCodeIn": "Renvoyer le code ({{seconds}} s)",
-    "codeExpired": "Ce code a expiré. Veuillez en demander un nouveau.",
-    "tooManyRequests": "Trop de demandes. Veuillez patienter un instant avant de demander un nouveau code.",
     "havingTrouble": "Un problème ?",
     "signInManually": "Se connecter manuellement",
     "noAuthToken": "Aucun jeton d'authentification fourni",
@@ -180,8 +175,7 @@
     "appointmentNotFound": "Rendez-vous introuvable",
     "failedToLoadParticipant": "Échec du chargement des informations du participant",
     "statusCompleted": "Réalisé",
-    "statusNoshow": "Non honoré",
-    "title": "Accueil"
+    "statusNoshow": "Non honoré"
   },
   "newRequest": {
     "selectSpecialty": "Choisir une spécialité",
@@ -238,10 +232,7 @@
     "cancelConfirmTitle": "Annuler la demande ?",
     "cancelConfirmMessage": "Les informations saisies seront perdues.",
     "cancelConfirmStay": "Continuer la demande",
-    "cancelConfirmLeave": "Quitter",
-    "symptomLabel": "Décrivez vos symptômes",
-    "previousWeek": "Semaine précédente",
-    "nextWeek": "Semaine suivante"
+    "cancelConfirmLeave": "Quitter"
   },
   "profile": {
     "changeServer": "Changer de serveur",
@@ -296,8 +287,7 @@
     "encryptionPassphraseChanged": "Phrase de passe mise à jour",
     "encryptionInvalidOldPassphrase": "La phrase de passe actuelle est incorrecte",
     "encryptionNewPassphraseTitle": "Nouvelle phrase de passe générée",
-    "encryptionNewPassphraseMessage": "Enregistrez cette phrase de passe maintenant — elle ne sera affichée qu'une seule fois.",
-    "changePhoto": "Changer la photo de profil"
+    "encryptionNewPassphraseMessage": "Enregistrez cette phrase de passe maintenant — elle ne sera affichée qu'une seule fois."
   },
   "onboarding": {
     "title": "Bienvenue !",
@@ -313,15 +303,7 @@
     "encryptionNewPassphrase": "Nouvelle phrase de passe",
     "encryptionInvalidPassphrase": "Phrase de passe invalide. Veuillez réessayer.",
     "save": "Enregistrer et continuer",
-    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer.",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "email": "E-mail",
-    "password": "Mot de passe",
-    "passwordConfirm": "Confirmez le mot de passe",
-    "passwordOptional": "Facultatif. Vous pourrez toujours vous connecter avec un code.",
-    "passwordsMismatch": "Les mots de passe ne correspondent pas",
-    "passwordRejected": "Ce mot de passe a été refusé. Essayez-en un plus long."
+    "errorMessage": "Impossible de sauvegarder vos préférences. Veuillez réessayer."
   },
   "activateEncryption": {
     "title": "Activer le chiffrement",
@@ -349,14 +331,7 @@
     "typePlaceholder": "Tapez un message...",
     "today": "Aujourd'hui",
     "yesterday": "Hier",
-    "unreadMessages": "Messages non lus",
-    "openImage": "Ouvrir l'image {{name}}",
-    "downloadAttachment": "Télécharger {{name}}",
-    "editMessage": "Modifier le message",
-    "deleteMessage": "Supprimer le message",
-    "removeFile": "Retirer le fichier",
-    "attachFile": "Joindre un fichier",
-    "send": "Envoyer le message"
+    "unreadMessages": "Messages non lus"
   },
   "preJoinLobby": {
     "settingUp": "Configuration de vos appareils...",
@@ -504,23 +479,6 @@
     "declined": "Vous avez décliné le rendez-vous",
     "failedDecline": "Échec du refus"
   },
-  "confirmVisibility": {
-    "title": "Confirmer l'accès",
-    "error": "Erreur",
-    "goToHome": "Aller à l'accueil",
-    "confirmed": "Accès confirmé",
-    "confirmedMessage": "Le praticien peut désormais accéder à votre dossier.",
-    "explanation": "Un praticien de {{ organisation }} souhaite accéder à votre dossier. Si vous êtes d'accord, confirmez ci-dessous.",
-    "explanationWithName": "{{ name }} de {{ organisation }} souhaite accéder à votre dossier. Si vous êtes d'accord, confirmez ci-dessous.",
-    "explanationPersonal": "{{ name }} souhaite accéder à votre dossier. Si vous êtes d'accord, confirmez ci-dessous.",
-    "explanationGeneric": "Un praticien souhaite accéder à votre dossier. Si vous êtes d'accord, confirmez ci-dessous.",
-    "failedLoad": "Échec du chargement de la demande",
-    "confirmButton": "Confirmer l'accès",
-    "skipToHome": "Passer et aller à l'accueil",
-    "invalidLink": "Lien de confirmation invalide",
-    "confirmSuccess": "Accès confirmé avec succès",
-    "failedConfirm": "Échec de la confirmation de l'accès"
-  },
   "terms": {
     "accept": "Accepter",
     "acceptCheckbox": "J'ai lu et j'accepte les conditions d'utilisation",
@@ -543,8 +501,6 @@
     "connectedToConsultation": "Connecté à la consultation",
     "failedJoin": "Échec de la connexion à l'appel vidéo",
     "failedToggleCamera": "Échec de l'activation de la caméra",
-    "backgroundBlur": "Flou d'arrière-plan",
-    "failedToggleBackgroundBlur": "Impossible de modifier le flou d'arrière-plan",
     "failedToggleMic": "Échec de l'activation du microphone",
     "failedToggleScreen": "Échec du partage d'écran",
     "switchingCamera": "Changement de caméra...",
@@ -560,18 +516,7 @@
     "messageUpdated": "Message mis à jour",
     "failedUpdate": "Échec de la mise à jour du message",
     "messageDeleted": "Message supprimé",
-    "failedDelete": "Échec de la suppression du message",
-    "microphone": "Microphone",
-    "camera": "Caméra",
-    "endCall": "Raccrocher",
-    "screenShare": "Partager l'écran",
-    "switchCamera": "Changer de caméra",
-    "chatWithUnread": "Discussion, {{count}} messages non lus",
-    "micMuted": "Microphone coupé",
-    "cameraOff": "Caméra désactivée",
-    "participantJoined": "{{name}} a rejoint la consultation",
-    "participantLeft": "{{name}} a quitté la consultation",
-    "title": "Consultation vidéo"
+    "failedDelete": "Échec de la suppression du message"
   },
   "videoCall": {
     "leaveCallTitle": "Quitter l'appel vidéo ?",
@@ -597,8 +542,8 @@
     "resultsTitle": "Résultats",
     "typeDoctor": "Praticien",
     "typeOrganisation": "Établissement",
+    "noSlots": "Aucune disponibilité",
     "bookButton": "Prendre rendez-vous",
-    "detailsButton": "Détails",
     "suggestSpecialities": "Spécialités",
     "suggestPractitioners": "Praticiens",
     "suggestOrganisations": "Établissements",
@@ -644,29 +589,9 @@
   },
   "practitioner": {
     "notFound": "Praticien introuvable",
-    "backToResults": "Retour aux résultats",
     "organisation": "Organisation",
     "additionalInfo": "Informations complémentaires",
     "contact": "Contact",
     "profile": "Profil"
-  },
-  "verifyAccount": {
-    "title": "Confirmez votre compte",
-    "identifierPlaceholder": "E-mail ou numéro de téléphone",
-    "invalidIdentifier": "Saisissez une adresse e-mail ou un numéro de téléphone valide",
-    "phoneNeedsCountryCode": "Ajoutez votre indicatif pays, par exemple +33612345678",
-    "codeSentTo": "Saisissez le code à 6 chiffres que nous venons de vous envoyer.",
-    "enterCode": "Entrez le code à 6 chiffres",
-    "invalidCode": "Code invalide ou expiré.",
-    "invalidCodeFormat": "Veuillez entrer un code valide à 6 chiffres",
-    "verifyCode": "Confirmer",
-    "didntReceiveCode": "Vous n'avez pas reçu le code ?",
-    "resendCode": "Renvoyer le code",
-    "resendCodeIn": "Renvoyer le code ({{seconds}} s)",
-    "tooManyRequests": "Trop de demandes. Veuillez patienter un instant avant de demander un nouveau code.",
-    "sendingCode": "Envoi...",
-    "codeSent": "Code envoyé.",
-    "sendFailed": "Impossible d'envoyer le code. Veuillez réessayer.",
-    "backToLogin": "Retour à la connexion"
   }
 }

@@ -1,29 +1,24 @@
 <ion-header *ngIf="canCancel">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()" [attr.aria-label]="'common.back' | translate">
-        <ion-icon name="arrow-back-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      <ion-button (click)="cancel()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
     <ion-title>{{ 'instancePicker.changeServer' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content id="main-content" role="main" class="ion-padding">
+<ion-content class="ion-padding">
   <div class="picker-wrapper">
     <h1>{{ 'instancePicker.title' | translate }}</h1>
 
     <ng-container *ngIf="instances.length > 0; else emptyTpl">
       <p class="subtitle">{{ 'instancePicker.knownSubtitle' | translate }}</p>
       <ion-list>
-        <!-- Associated through aria-labelledby on the control, not for/id: Ionic
-             generates its own id for the inner native input and offers no way to
-             set it, so a for attribute here would point at nothing. -->
-        <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
-        <label class="field-label" id="instance-picker-field-1-label">{{ 'instancePicker.hostPlaceholder' | translate }}</label>
         <ion-item-sliding *ngFor="let instance of instances">
           <ion-item button (click)="select(instance.host)">
-            <ion-icon name="business-outline" slot="start" aria-hidden="true"></ion-icon>
+            <ion-icon name="business-outline" slot="start"></ion-icon>
             <ion-label>
               <h2>{{ instance.name || instance.host }}</h2>
               <p *ngIf="instance.name">{{ instance.host }}</p>
@@ -35,7 +30,7 @@
               [attr.aria-label]="'instancePicker.removeInstance' | translate"
               (click)="remove(instance.host, $event)"
             >
-              <ion-icon name="trash-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-item>
           <ion-item-options side="end">
@@ -56,10 +51,11 @@
       <ion-item>
         <ion-input
           [(ngModel)]="newHost"
-          aria-labelledby="instance-picker-field-1-label"
+          [placeholder]="'instancePicker.hostPlaceholder' | translate"
           autocomplete="url"
           autocapitalize="off"
-          inputmode="url"></ion-input>
+          inputmode="url"
+        ></ion-input>
       </ion-item>
       <ion-button
         expand="block"

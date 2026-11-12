@@ -5,7 +5,6 @@ import { environment } from '../../../environments/environment';
 import { User, LoginRequest, LoginResponse, RegisterRequest, MagicLinkRequest, MagicLinkVerify, TokenAuthRequest, TokenAuthResponse } from '../models/user.model';
 import { StorageService } from './storage.service';
 import { TranslationService } from './translation.service';
-import { PendingActionService } from './pending-action.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +19,6 @@ export class AuthService {
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   public authReady: Promise<void>;
   private translationService = inject(TranslationService);
-  private pendingActionService = inject(PendingActionService);
 
   constructor(
     private http: HttpClient,
@@ -93,16 +91,8 @@ export class AuthService {
     return firstValueFrom(this.getConfig());
   }
 
-  /** Claim an account with the code sent to it; signs the caller in. */
-  verifyAccountCode(data: { identifier: string; code: string }): Observable<TokenAuthResponse> {
-    return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/verify/`, data)
-      .pipe(switchMap(response => this.storeTokens(response)));
-  }
-
-  resendVerificationCode(identifier: string): Observable<{ detail: string }> {
-    return this.http.post<{ detail: string }>(
-      `${this.apiUrl}/auth/verify/resend/`, { identifier }
-    );
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/auth/verify-email/`, { params: { token } });
   }
 
   forgotPassword(data: { email: string }): Observable<any> {
@@ -118,26 +108,25 @@ export class AuthService {
     return this.http.post<{ detail: string }>(`${this.apiUrl}/auth/password/reset/confirm/`, data);
   }
 
-  sendVerificationCode(identifier: string): Observable<{ detail: string; auth_token: string }> {
+  sendVerificationCode(email: string): Observable<{ detail: string; auth_token: string }> {
     return this.http.post<{ detail: string; auth_token: string }>(
-      `${this.apiUrl}/auth/send-verification-code/`, { identifier }
+      `${this.apiUrl}/auth/send-verification-code/`, { email }
     );
   }
 
   loginWithToken(data: TokenAuthRequest): Observable<TokenAuthResponse> {
     return this.http.post<TokenAuthResponse>(`${this.apiUrl}/auth/token/`, data)
-      .pipe(switchMap(response => this.storeTokens(response)));
-  }
-
-  /** Persist the tokens of any endpoint that signs the caller in. */
-  private async storeTokens(response: TokenAuthResponse): Promise<TokenAuthResponse> {
-    if (response.access && response.refresh) {
-      await this.storage.set('access_token', response.access);
-      await this.storage.set('refresh_token', response.refresh);
-      this.isAuthenticatedSubject.next(true);
-      await firstValueFrom(this.getCurrentUser());
-    }
-    return response;
+      .pipe(
+        switchMap(async (response) => {
+          if (response.access && response.refresh) {
+            await this.storage.set('access_token', response.access);
+            await this.storage.set('refresh_token', response.refresh);
+            this.isAuthenticatedSubject.next(true);
+            await firstValueFrom(this.getCurrentUser());
+          }
+          return response;
+        })
+      );
   }
 
   getCurrentUser(): Observable<User> {
@@ -168,14 +157,6 @@ export class AuthService {
       );
   }
 
-  /** Set a password on the signed-in account (no old password required). */
-  setPassword(password: string): Observable<{ detail: string }> {
-    return this.http.post<{ detail: string }>(
-      `${this.apiUrl}/auth/password/change/`,
-      { new_password1: password, new_password2: password }
-    );
-  }
-
   get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
@@ -185,8 +166,6 @@ export class AuthService {
   }
 
   async logout() {
-    // A link followed but never opened must not resurface at the next login.
-    this.pendingActionService.clear();
     // Call backend to blacklist the refresh token
     const refreshToken = await this.storage.get('refresh_token');
     if (refreshToken) {

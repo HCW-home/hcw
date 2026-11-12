@@ -7,7 +7,6 @@
     "loading": "Laden...",
     "cancel": "Abbrechen",
     "close": "Schliessen",
-    "clear": "Löschen",
     "back": "Zurück",
     "save": "Speichern",
     "error": "Fehler",
@@ -26,18 +25,15 @@
     "reload": "Neu laden",
     "videoCall": "Videoanruf",
     "offline": "Serververbindung unterbrochen",
-    "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch...",
-    "required": "erforderlich",
-    "language": "Sprache",
-    "skipToContent": "Zum Hauptinhalt springen",
-    "previous": "Zurück",
-    "next": "Weiter"
+    "reconnecting": "Serververbindung unterbrochen. Verbindungsversuch..."
   },
   "login": {
     "title": "Anmelden",
     "subtitle": "Melden Sie sich bei Ihrem Konto an",
     "platformDescription": "Ihre sichere Telemedizin-Plattform fuer Fernkonsultationen mit Ihrem Arzt.",
+    "emailPlaceholder": "E-Mail",
     "passwordPlaceholder": "Passwort",
+    "emailRequired": "Eine gueltige E-Mail-Adresse ist erforderlich",
     "passwordMinLength": "Das Passwort muss mindestens 6 Zeichen lang sein",
     "forgotPassword": "Passwort vergessen?",
     "noAccount": "Noch kein Konto?",
@@ -53,37 +49,31 @@
     "verifyCode": "Code ueberpruefen",
     "codeSentTo": "Ein Bestaetigungscode wurde an Ihre E-Mail-Adresse gesendet.",
     "resendCode": "Code erneut senden",
-    "resendCodeIn": "Code erneut senden ({{seconds}} s)",
-    "codeExpired": "Dieser Code ist abgelaufen. Bitte fordern Sie einen neuen an.",
-    "tooManyRequests": "Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie einen neuen Code anfordern.",
     "didntReceiveCode": "Keinen Code erhalten?",
     "backToEmail": "Aendern",
     "tooManyAttempts": "Zu viele Versuche. Bitte fordern Sie einen neuen Code an.",
     "invalidVerificationCode": "Ungueltiger Bestaetigungscode.",
     "codeSent": "Bestaetigungscode gesendet.",
-    "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-    "identifierPlaceholder": "E-Mail oder Telefonnummer",
-    "identifierRequired": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
-    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
-    "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort ausblenden",
-    "identifierLabel": "E-Mail oder Telefonnummer",
-    "passwordLabel": "Passwort",
-    "verificationCodeLabel": "Bestätigungscode"
+    "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
   },
   "register": {
     "platformDescription": "Erstellen Sie Ihr Konto und beginnen Sie noch heute mit Ihren Telemedizin-Konsultationen.",
     "title": "Konto erstellen",
     "subtitle": "Registrieren Sie sich, um loszulegen",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "firstNameRequired": "Der Vorname ist erforderlich",
+    "emailPlaceholder": "E-Mail",
+    "emailInvalid": "Bitte geben Sie eine gueltige E-Mail-Adresse ein",
+    "passwordPlaceholder": "Passwort",
+    "passwordMinLength": "Das Passwort muss mindestens 8 Zeichen lang sein",
+    "confirmPassword": "Passwort bestaetigen",
+    "passwordsMismatch": "Die Passwoerter stimmen nicht ueberein",
     "registrationDisabled": "Die Registrierung ist derzeit deaktiviert.",
     "hasAccount": "Bereits ein Konto?",
     "creatingAccount": "Konto wird erstellt...",
-    "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
-    "identifierPlaceholder": "E-Mail oder Telefonnummer",
-    "identifierHelp": "Wir senden Ihnen einen 6-stelligen Code zur Bestätigung.",
-    "identifierInvalid": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
-    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
-    "identifierLabel": "E-Mail oder Telefonnummer"
+    "verificationEmailSent": "Eine Bestaetigungs-E-Mail wurde an Ihre Adresse gesendet.",
+    "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
   "forgotPassword": {
     "title": "Passwort vergessen?",
@@ -113,6 +103,14 @@
     "linkExpired": "Der Zuruecksetzungslink ist abgelaufen oder ungueltig",
     "invalidResetLink": "Ungueltiger Zuruecksetzungslink"
   },
+  "verifyEmail": {
+    "title": "E-Mail-Verifizierung",
+    "verifying": "Ihre E-Mail-Adresse wird verifiziert...",
+    "success": "Ihre E-Mail-Adresse wurde erfolgreich verifiziert.",
+    "goToLogin": "Zur Anmeldung",
+    "invalidLink": "Ungueltiger oder fehlender Verifizierungslink.",
+    "verificationFailed": "E-Mail-Verifizierung fehlgeschlagen. Der Link ist moeglicherweise ungueltig oder abgelaufen."
+  },
   "verifyInvite": {
     "verifyingCode": "Code wird ueberprueft...",
     "authenticating": "Authentifizierung...",
@@ -126,9 +124,6 @@
     "didntReceive": "Keinen Code erhalten?",
     "sending": "Wird gesendet...",
     "resendCode": "Code erneut senden",
-    "resendCodeIn": "Code erneut senden ({{seconds}} s)",
-    "codeExpired": "Dieser Code ist abgelaufen. Bitte fordern Sie einen neuen an.",
-    "tooManyRequests": "Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie einen neuen Code anfordern.",
     "havingTrouble": "Probleme?",
     "signInManually": "Manuell anmelden",
     "noAuthToken": "Kein Authentifizierungstoken bereitgestellt",
@@ -178,8 +173,7 @@
     "appointmentNotFound": "Termin nicht gefunden",
     "failedToLoadParticipant": "Fehler beim Laden der Teilnehmerinformationen",
     "statusCompleted": "Durchgeführt",
-    "statusNoshow": "Nicht wahrgenommen",
-    "title": "Startseite"
+    "statusNoshow": "Nicht wahrgenommen"
   },
   "newRequest": {
     "selectSpecialty": "Fachgebiet waehlen",
@@ -230,10 +224,7 @@
     "cancelConfirmTitle": "Anfrage abbrechen?",
     "cancelConfirmMessage": "Die eingegebenen Informationen gehen verloren.",
     "cancelConfirmStay": "Anfrage fortsetzen",
-    "cancelConfirmLeave": "Verlassen",
-    "symptomLabel": "Beschreiben Sie Ihre Symptome",
-    "previousWeek": "Vorherige Woche",
-    "nextWeek": "Nächste Woche"
+    "cancelConfirmLeave": "Verlassen"
   },
   "instancePicker": {
     "title": "Wählen Sie Ihre Instanz",
@@ -298,8 +289,7 @@
     "profileUpdateFailed": "Profil-Aktualisierung fehlgeschlagen",
     "selectImageFile": "Bitte waehlen Sie eine Bilddatei",
     "pictureUpdated": "Profilbild aktualisiert",
-    "pictureUploadFailed": "Hochladen des Profilbilds fehlgeschlagen",
-    "changePhoto": "Profilbild ändern"
+    "pictureUploadFailed": "Hochladen des Profilbilds fehlgeschlagen"
   },
   "messageList": {
     "messages": "Nachrichten",
@@ -314,14 +304,7 @@
     "loadingImage": "Bild wird geladen...",
     "typePlaceholder": "Nachricht eingeben...",
     "yesterday": "Gestern",
-    "unreadMessages": "Ungelesene Nachrichten",
-    "openImage": "Bild {{name}} öffnen",
-    "downloadAttachment": "{{name}} herunterladen",
-    "editMessage": "Nachricht bearbeiten",
-    "deleteMessage": "Nachricht löschen",
-    "removeFile": "Datei entfernen",
-    "attachFile": "Datei anhängen",
-    "send": "Nachricht senden"
+    "unreadMessages": "Ungelesene Nachrichten"
   },
   "preJoinLobby": {
     "settingUp": "Ihre Geraete werden eingerichtet...",
@@ -488,8 +471,6 @@
     "connectedToConsultation": "Mit Konsultation verbunden",
     "failedJoin": "Beitritt zum Videoanruf fehlgeschlagen",
     "failedToggleCamera": "Kamera umschalten fehlgeschlagen",
-    "backgroundBlur": "Hintergrund weichzeichnen",
-    "failedToggleBackgroundBlur": "Die Hintergrundunschärfe konnte nicht geändert werden",
     "failedToggleMic": "Mikrofon umschalten fehlgeschlagen",
     "failedToggleScreen": "Bildschirmfreigabe umschalten fehlgeschlagen",
     "switchingCamera": "Kamera wird gewechselt...",
@@ -505,18 +486,7 @@
     "messageUpdated": "Nachricht aktualisiert",
     "failedUpdate": "Aktualisierung der Nachricht fehlgeschlagen",
     "messageDeleted": "Nachricht geloescht",
-    "failedDelete": "Loeschen der Nachricht fehlgeschlagen",
-    "microphone": "Mikrofon",
-    "camera": "Kamera",
-    "endCall": "Anruf beenden",
-    "screenShare": "Bildschirm teilen",
-    "switchCamera": "Kamera wechseln",
-    "chatWithUnread": "Chat, {{count}} ungelesene Nachrichten",
-    "micMuted": "Mikrofon stummgeschaltet",
-    "cameraOff": "Kamera aus",
-    "participantJoined": "{{name}} ist der Konsultation beigetreten",
-    "participantLeft": "{{name}} hat die Konsultation verlassen",
-    "title": "Videosprechstunde"
+    "failedDelete": "Loeschen der Nachricht fehlgeschlagen"
   },
   "videoCall": {
     "leaveCallTitle": "Videoanruf verlassen?",
@@ -545,8 +515,8 @@
     "resultsTitle": "Ergebnisse",
     "typeDoctor": "Fachperson",
     "typeOrganisation": "Einrichtung",
+    "noSlots": "Keine Verfügbarkeit",
     "bookButton": "Termin buchen",
-    "detailsButton": "Details",
     "suggestSpecialities": "Fachgebiete",
     "suggestPractitioners": "Fachpersonen",
     "suggestOrganisations": "Einrichtungen",
@@ -560,39 +530,9 @@
   },
   "practitioner": {
     "notFound": "Fachperson nicht gefunden",
-    "backToResults": "Zurück zu den Ergebnissen",
     "organisation": "Organisation",
     "additionalInfo": "Weitere Informationen",
     "contact": "Kontakt",
     "profile": "Profil"
-  },
-  "verifyAccount": {
-    "title": "Bestätigen Sie Ihr Konto",
-    "identifierPlaceholder": "E-Mail oder Telefonnummer",
-    "invalidIdentifier": "Geben Sie eine gültige E-Mail-Adresse oder Telefonnummer ein",
-    "phoneNeedsCountryCode": "Fügen Sie Ihre Ländervorwahl hinzu, zum Beispiel +49612345678",
-    "codeSentTo": "Geben Sie den 6-stelligen Code ein, den wir Ihnen gesendet haben.",
-    "enterCode": "6-stelligen Code eingeben",
-    "invalidCode": "Ungültiger oder abgelaufener Code.",
-    "invalidCodeFormat": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
-    "verifyCode": "Bestätigen",
-    "didntReceiveCode": "Code nicht erhalten?",
-    "resendCode": "Code erneut senden",
-    "resendCodeIn": "Code erneut senden ({{seconds}} s)",
-    "tooManyRequests": "Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie einen neuen Code anfordern.",
-    "sendingCode": "Wird gesendet...",
-    "codeSent": "Code gesendet.",
-    "sendFailed": "Der Code konnte nicht gesendet werden. Bitte erneut versuchen.",
-    "backToLogin": "Zurück zur Anmeldung"
-  },
-  "onboarding": {
-    "firstName": "Vorname",
-    "lastName": "Nachname",
-    "email": "E-Mail",
-    "password": "Passwort",
-    "passwordConfirm": "Passwort bestätigen",
-    "passwordOptional": "Optional. Sie können sich weiterhin mit einem Code anmelden.",
-    "passwordsMismatch": "Passwörter stimmen nicht überein",
-    "passwordRejected": "Dieses Passwort wurde abgelehnt. Versuchen Sie ein längeres."
   }
 }

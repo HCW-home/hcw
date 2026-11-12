@@ -75,50 +75,18 @@ export enum AppointmentType {
   INPERSON = 'inPerson',
 }
 
-/**
- * Statuses an appointment must carry to belong on a planning, as the `status_in`
- * filter expects them. A cancelled or still-draft appointment is not a
- * commitment; a past one qualified as completed or no-show still is — filtering
- * on `scheduled` alone made yesterday's appointments vanish from the calendar as
- * soon as the outcome task ran.
- */
-export const PLANNED_APPOINTMENT_STATUSES = [
-  AppointmentStatus.SCHEDULED,
-  AppointmentStatus.COMPLETED,
-  AppointmentStatus.NOSHOW,
-].join(',');
-
-/**
- * Statuses whose call room stays reachable, mirroring the backend rule behind
- * `can_join`. Qualifying an appointment as completed or no-show is bookkeeping,
- * not a lock: the call must remain rejoinable. Only a cancelled appointment and
- * a draft one — never sent to its participants — have no room to enter.
- */
-export function isJoinableAppointmentStatus(
-  status: AppointmentStatus | string | null | undefined
-): boolean {
-  return (
-    status === AppointmentStatus.SCHEDULED ||
-    status === AppointmentStatus.COMPLETED ||
-    status === AppointmentStatus.NOSHOW
-  );
-}
-
 export interface Appointment {
   id: number;
   type: AppointmentType;
   title?: string | null;
   scheduled_at: string;
   end_expected_at: string | null;
-  // The list endpoints return the consultation as a bare id, while the
-  // participant detail endpoint nests the whole object: read it through
-  // getAppointmentConsultationId() instead of using it directly.
-  consultation?: number | Consultation | null;
+  consultation: number;
   created_by: User;
   status: AppointmentStatus;
   created_at: string;
   participants: Participant[];
-  consultation_id?: number | null;
+  consultation_id: number;
   consultation_title?: string | null;
   // Server-side answer to "may the current user join this call?"
   can_join?: boolean;
@@ -135,7 +103,6 @@ export interface MessageAttachment {
 
 export interface ConsultationMessage {
   id: number;
-  consultation?: number;
   content: string | null;
   attachment: MessageAttachment | null;
   recording_url: string | null;
@@ -164,9 +131,6 @@ export interface Consultation {
   group_id?: number;
   visible_by_patient: boolean;
   temporary?: boolean;
-  // First non-cancelled appointment still ahead. The backend refuses to close
-  // a follow-up while one of them is still scheduled in the future.
-  next_appointment?: Appointment | null;
   custom_fields?: CustomFieldValue[];
   unread_count?: number;
   last_read_at?: string;

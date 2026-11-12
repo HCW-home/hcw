@@ -9,7 +9,6 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields import BLANK_CHOICE_DASH
-from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -25,12 +24,6 @@ from .abstracts import ModelOwnerAbstract
 from .managers import UserManager
 from .phone import MAX_PHONE_LENGTH, normalize_phone_number
 from .validators import validate_phone_number
-from .verification import (
-    MAX_VERIFICATION_ATTEMPTS,
-    VERIFICATION_CODE_RESEND_DELAY,
-    VERIFICATION_CODE_REUSE_WINDOW,
-    generate_verification_code,
-)
 
 import secrets
 
@@ -77,10 +70,6 @@ class Organisation(models.Model):
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
-    # RPPS publishes one email per site, shared by everyone practising there,
-    # so it describes the structure and not a person. Not unique: groups and
-    # chains reuse a single address across several sites.
-    email = models.EmailField(blank=True, null=True)
     login_text_patient = models.TextField(blank=True, null=True)
     login_text_practitioner = models.TextField(blank=True, null=True)
     footer_patient = models.TextField(blank=True, null=True)
@@ -275,25 +264,18 @@ class User(AbstractUser):
         help_text="Authentication token for appointment access",
     )
     verification_code = models.IntegerField(null=True, blank=True)
-    # Despite its name, this dates one_time_auth_token: it starts the grace
-    # period of a magic link and, for accounts signing in without a code, its
-    # expiry. The code itself is dated by the two fields below.
     verification_code_created_at = models.DateTimeField(null=True, blank=True)
-    verification_code_issued_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When the pending verification code was generated",
-    )
-    verification_code_sent_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When the pending verification code was last sent",
-    )
     verification_attempts = models.IntegerField(default=0)
 
     email_verified = models.BooleanField(
         default=False,
         help_text="Whether the user's email address has been verified",
+    )
+    email_verification_token = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text="Token used for email verification",
     )
 
     created_by = models.ForeignKey(
@@ -349,96 +331,6 @@ class User(AbstractUser):
         """
         return self.communication_method == CommunicationMethod.manual or (
             not self.email and not self.mobile_phone_number
-        )
-
-    def issue_verification_code(self, keep_auth_token=False) -> bool:
-        """Make sure a code is pending for this user; return whether to send it.
-
-        A code asked for again while it is fresh goes out again unchanged, so
-        every message received in the meantime carries a code that works,
-        whichever one the person opens. Its attempt counter is left alone on
-        purpose: resetting it would hand out unlimited guesses on the very same
-        code. Within ``VERIFICATION_CODE_RESEND_DELAY`` of the last message,
-        nothing is sent at all, which absorbs reloads and extra tabs.
-
-        Callers hold a row lock (``select_for_update``). Two concurrent
-        requests would otherwise each mint a code, and only the one written
-        last would work.
-
-        Unless ``keep_auth_token`` is set, ``one_time_auth_token`` is cleared:
-        once an account is being claimed with a code, that code is the way in,
-        and a magic link still lying around must not stand in for it. The
-        password reset flow takes the same precaution (see users/forms.py). The
-        clearing goes through a queryset update rather than ``save()``:
-        ``save()`` mints a replacement token for any ``temporary`` user (see
-        below), which would silently undo the precaution for exactly the
-        accounts this flow creates.
-        """
-        now = timezone.now()
-        reusable = (
-            self.verification_code is not None
-            and self.verification_code_issued_at is not None
-            and now - self.verification_code_issued_at < VERIFICATION_CODE_REUSE_WINDOW
-            and self.verification_attempts < MAX_VERIFICATION_ATTEMPTS
-        )
-        recently_sent = (
-            self.verification_code_sent_at is not None
-            and now - self.verification_code_sent_at < VERIFICATION_CODE_RESEND_DELAY
-        )
-        send = not (reusable and recently_sent)
-        if not reusable:
-            self.verification_code = generate_verification_code()
-            self.verification_code_issued_at = now
-            self.verification_attempts = 0
-        if send:
-            self.verification_code_sent_at = now
-            self.save(
-                update_fields=[
-                    "verification_code",
-                    "verification_code_issued_at",
-                    "verification_code_sent_at",
-                    "verification_attempts",
-                ]
-            )
-        if not keep_auth_token:
-            self.one_time_auth_token = None
-            type(self).objects.filter(pk=self.pk).update(one_time_auth_token=None)
-        return send
-
-    @property
-    def authenticates_without_code(self) -> bool:
-        """Whether a magic-link token alone is enough to sign this user in.
-
-        Invited participants (`temporary`) rely on it: the link in their
-        invitation is the whole credential, and asking them for a code would
-        add a message and a step to every invitation. Accounts no channel can
-        reach automatically have no choice either — no code could be delivered
-        to them.
-
-        AnonymousTokenAuthView reads it to decide whether a magic link needs a
-        code. SendVerificationCodeView never hands that link to anyone, only a
-        token that always needs the code, and withholds even that from these
-        accounts.
-        """
-        return self.requires_manual_access or self.temporary
-
-    @property
-    def is_claimed(self) -> bool:
-        """Whether the owner has made this account their own.
-
-        Practitioners create accounts for the people they invite and type in
-        the email and phone number that sign-in codes and links are sent to.
-        Until the owner verifies their email, goes through onboarding, sets a
-        password or signs in with one, the account is nothing more than that
-        contact card and a typo in it can still be corrected. From then on
-        those details are the owner's credentials: whoever rewrites them
-        receives the next code and signs in as the owner.
-        """
-        return bool(
-            self.email_verified
-            or not self.is_first_login
-            or self.last_login
-            or (self.password and self.has_usable_password())
         )
 
     @property
@@ -566,64 +458,6 @@ class HealthMetric(models.Model):
 
     acknowledged_at = models.DateTimeField(blank=True, null=True)
 
-class PatientVisibilityGrant(models.Model):
-    """Extends a patient's visibility to another organisation, or to a single
-    organisation-less practitioner, once confirmed.
-
-    Two kinds of grant, distinguished by `organisation`:
-    - Organisation-wide: `organisation` is set. Created when a practitioner
-      who belongs to an organisation requests access; every practitioner of
-      that organisation gains visibility once confirmed.
-    - Personal: `organisation` is left empty. Created when a practitioner who
-      belongs to no organisation requests access; only `requested_by`
-      themself gains visibility once confirmed, no one else.
-
-    Created with `confirmed_at=None` when a practitioner requests access to a
-    hidden patient by exact email/phone match. `_filter_patients` in
-    users/views.py only honours grants where `confirmed_at` is set, so the
-    patient must click the confirmation link sent to them before the grant
-    takes effect (unless `patient_visibility_requires_confirmation` is
-    disabled, in which case it is confirmed immediately). Each grant is
-    independent: creating one never revokes another.
-    """
-
-    patient = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="visibility_grants",
-    )
-    organisation = models.ForeignKey(
-        "users.Organisation",
-        on_delete=models.CASCADE,
-        related_name="patient_grants",
-        null=True,
-        blank=True,
-    )
-    requested_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="requested_patient_visibility",
-    )
-    confirmed_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["patient", "organisation"],
-                condition=Q(organisation__isnull=False),
-                name="patient_visibility_grant_org_unique",
-            ),
-            models.UniqueConstraint(
-                fields=["patient", "requested_by"],
-                condition=Q(organisation__isnull=True),
-                name="patient_visibility_grant_personal_unique",
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.patient} -> {self.organisation or self.requested_by}"
 
 class DAVAppPassword(models.Model):
     """

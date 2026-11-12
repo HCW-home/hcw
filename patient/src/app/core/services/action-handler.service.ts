@@ -1,14 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { NavController } from '@ionic/angular/standalone';
 import { AuthService } from './auth.service';
 import { ConsultationService } from './consultation.service';
-import { PendingActionService } from './pending-action.service';
-import {
-  Appointment,
-  IParticipantDetail,
-  isJoinableAppointmentStatus,
-} from '../models/consultation.model';
+import { Appointment, IParticipantDetail } from '../models/consultation.model';
 
 export interface ActionConfig {
   route: string;
@@ -31,34 +25,17 @@ const ACTION_ROUTES: Record<string, ActionConfig> = {
   'message': { route: '/home', requiresAuth: true, appendId: false },
   'consultation': { route: '/home', requiresAuth: true, appendId: false, idAsQueryParam: 'openChat' },
   'completeBooking': { route: '/new-request', requiresAuth: true, appendId: false },
-  'confirmVisibility': { route: '/confirm-visibility', requiresAuth: true, appendId: true },
 };
 
 const DEFAULT_ACTION: ActionConfig = { route: '/home', requiresAuth: true, appendId: false };
-
-/**
- * Routes that interrupt an action instead of fulfilling it: the pages asking
- * the user to authenticate, and the three gates every private route goes
- * through. Reaching one of them means the action is still owed to the user.
- */
-const INTERRUPTING_ROUTES: string[] = [
-  '/login',
-  '/register',
-  '/verify-invite',
-  '/terms',
-  '/onboarding',
-  '/activate-encryption',
-];
 
 @Injectable({
   providedIn: 'root'
 })
 export class ActionHandlerService {
   private navCtrl = inject(NavController);
-  private router = inject(Router);
   private consultationService = inject(ConsultationService);
   private authService = inject(AuthService);
-  private pendingActionService = inject(PendingActionService);
 
   private getRouteWithParams(action: string | null, id: string | null = null): ActionRoute {
     if (!action) {
@@ -76,24 +53,6 @@ export class ActionHandlerService {
       return { path: config.route, queryParams: { [config.idAsQueryParam]: id } };
     }
     return { path: config.route };
-  }
-
-  /**
-   * Replay the action of the link that brought the user here, if there is one.
-   *
-   * Called by every page that hands an authenticated user over to the
-   * application — login, invitation code, terms, onboarding, encryption
-   * activation — so the link survives however many steps stand between it and
-   * its destination. Returns false when nothing was pending, leaving the
-   * caller free to go to its own default page.
-   */
-  runPendingAction(mode: ActionNavigationMode = 'root'): boolean {
-    const pending = this.pendingActionService.peek();
-    if (!pending) {
-      return false;
-    }
-    this.navigateToAction(pending.action, pending.id, mode);
-    return true;
   }
 
   /**
@@ -119,23 +78,6 @@ export class ActionHandlerService {
       return;
     }
 
-    // A `message` link carries the message, not the conversation: resolve it so
-    // the chat actually opens instead of just landing on the dashboard.
-    if (action === 'message' && id) {
-      this.consultationService.getMessageById(Number(id)).subscribe({
-        next: (message) =>
-          this.navigate(
-            '/home',
-            message.consultation
-              ? { openChat: String(message.consultation) }
-              : undefined,
-            mode,
-          ),
-        error: () => this.navigate('/home', undefined, mode),
-      });
-      return;
-    }
-
     const actionRoute = this.getRouteWithParams(action, id);
     this.navigate(actionRoute.path, actionRoute.queryParams, mode);
   }
@@ -147,14 +89,10 @@ export class ActionHandlerService {
     mode: ActionNavigationMode,
   ): void {
     const appointment = participant.appointment;
-    // can_join is the server's own answer — it also covers a closed
-    // consultation and a roster the patient is no longer on. Older payloads
-    // without the flag fall back to the status rule.
-    const reachable = appointment
-      ? appointment.can_join ?? isJoinableAppointmentStatus(appointment.status)
-      : false;
     const canJoin =
-      reachable && (action === 'join' || this.isJoinable(appointment!));
+      appointment &&
+      appointment.status === 'scheduled' &&
+      (action === 'join' || this.isJoinable(appointment));
 
     if (!canJoin) {
       this.navigate(`/confirm-presence/${participantId}`, undefined, mode);
@@ -204,29 +142,10 @@ export class ActionHandlerService {
     queryParams: Record<string, string> | undefined,
     mode: ActionNavigationMode,
   ): void {
-    const navigation =
-      mode === 'forward'
-        ? this.navCtrl.navigateForward(path, { queryParams })
-        : this.navCtrl.navigateRoot(path, { queryParams });
-    navigation.then(navigated => this.clearWhenLanded(navigated));
-  }
-
-  /**
-   * Forget the stored action once its destination is actually reached.
-   *
-   * A guard that turns the user back cancels the navigation, but one answering
-   * with a UrlTree hands the pending promise over to its own redirect, so the
-   * promise still resolves to true while the user is left on a gate; only the
-   * URL tells that apart. Either way the action stays stored, which is what
-   * lets the page that finally clears the way replay it.
-   */
-  private clearWhenLanded(navigated: boolean): void {
-    const path = this.router.url.split(/[?#]/)[0];
-    const interrupted = INTERRUPTING_ROUTES.some(
-      route => path === route || path.startsWith(`${route}/`),
-    );
-    if (navigated && !interrupted) {
-      this.pendingActionService.clear();
+    if (mode === 'forward') {
+      this.navCtrl.navigateForward(path, { queryParams });
+    } else {
+      this.navCtrl.navigateRoot(path, { queryParams });
     }
   }
 }

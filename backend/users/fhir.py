@@ -248,7 +248,7 @@ class _BaseUserFhirMapper(FhirResourceMapper):
         caller = getattr(request, "user", None)
 
         if instance is None:
-            instance = self._resolve_upsert_target(parsed, context)
+            instance = self._resolve_upsert_target(parsed)
 
         if instance is None:
             instance = User(
@@ -292,17 +292,12 @@ class _BaseUserFhirMapper(FhirResourceMapper):
         instance._fhir_post_save = callbacks
         return instance
 
-    def _resolve_upsert_target(self, parsed, context=None):
+    def _resolve_upsert_target(self, parsed):
         """Look up an existing User from the identifier list (FHIR upsert).
 
         Resolves either the canonical HCW system (by pk) or the configured
-        external system (by external_id), among the users the calling view
-        lets the caller see. A match outside that scope is refused rather
-        than updated: a create must not reach an account a read cannot
-        (audit C-02).
+        external system (by external_id).
         """
-        view = (context or {}).get("view")
-        visible = view.get_queryset() if view is not None else User.objects.all()
         identifiers = parsed.identifier or []
         canonical_system = build_identifier(self.resource_type, 0)["system"]
         external_system = get_external_identifier_system(self.resource_type)
@@ -313,21 +308,19 @@ class _BaseUserFhirMapper(FhirResourceMapper):
                 continue
             if system == canonical_system:
                 try:
-                    lookup = {"pk": int(value)}
-                except ValueError:
+                    return User.objects.get(
+                        pk=int(value), is_practitioner=self.is_practitioner_value,
+                    )
+                except (User.DoesNotExist, ValueError):
                     return None
-            elif external_system and system == external_system:
-                lookup = {"external_id": value}
-            else:
-                continue
-            lookup["is_practitioner"] = self.is_practitioner_value
-            match = visible.filter(**lookup).first()
-            if match is None and User.objects.filter(**lookup).exists():
-                raise FhirOperationError(
-                    f"{self.resource_type} {system}|{value} cannot be modified.",
-                    code="forbidden", status_code=403,
-                )
-            return match
+            if external_system and system == external_system:
+                try:
+                    return User.objects.get(
+                        external_id=value,
+                        is_practitioner=self.is_practitioner_value,
+                    )
+                except User.DoesNotExist:
+                    return None
         return None
 
     def _resolve_managing_organization(self, parsed):

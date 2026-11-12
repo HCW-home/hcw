@@ -7,5 +7,3 @@ class ConsultationsConfig(AppConfig):
 
     def ready(self):
         from . import signals
-        # Message attachments are the files encrypted at rest.
-        import core.checks  # noqa: F401

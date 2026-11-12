@@ -44,9 +44,14 @@ urlpatterns = [
         name="patient-conditional",
     ),
     path(
-        "api/patients/visibility-grants/<int:pk>/confirm/",
-        views.PatientVisibilityGrantConfirmView.as_view(),
-        name="patient_visibility_grant_confirm",
+        "api/practitioners/",
+        views.PractitionerViewSet.as_view({
+            "get": "list",
+            "post": "create",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="practitioner-conditional",
     ),
     path(
         "api/practitioners/<int:pk>/public/",

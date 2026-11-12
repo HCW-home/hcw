@@ -1,0 +1,43 @@
+<ion-content class="verify-email-content" [scrollY]="false">
+  <div class="auth-card">
+    <app-auth-branding />
+    <div class="right-side">
+      <div class="right-content">
+        <h2>{{ 'verifyEmail.title' | translate }}</h2>
+
+        @if (isLoading) {
+          <div class="status-container step-animate">
+            <ion-spinner name="crescent" color="primary"></ion-spinner>
+            <ion-text color="medium">{{ 'verifyEmail.verifying' | translate }}</ion-text>
+          </div>
+        } @else if (success) {
+          <div class="status-container success step-animate">
+            <ion-icon name="checkmark-circle-outline" color="success" class="status-icon"></ion-icon>
+            <p>{{ 'verifyEmail.success' | translate }}</p>
+            <ion-button
+              expand="block"
+              shape="round"
+              (click)="goToLogin()"
+              class="action-button">
+              {{ 'common.signIn' | translate }}
+            </ion-button>
+          </div>
+        } @else {
+          <div class="status-container error step-animate">
+            <ion-icon name="close-circle-outline" color="danger" class="status-icon"></ion-icon>
+            <ion-text color="danger">{{ errorMessage }}</ion-text>
+            <ion-button
+              expand="block"
+              shape="round"
+              (click)="goToLogin()"
+              class="action-button">
+              {{ 'verifyEmail.goToLogin' | translate }}
+            </ion-button>
+          </div>
+        }
+
+        <app-language-selector></app-language-selector>
+      </div>
+    </div>
+  </div>
+</ion-content>

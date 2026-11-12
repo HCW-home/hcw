@@ -31,12 +31,7 @@ from modeltranslation.utils import get_translation_fields
 from . import providers
 from .abstracts import ModelCeleryAbstract
 from .providers import BaseMessagingProvider
-from .template import (
-    DEFAULT_NOTIFICATION_MESSAGES,
-    NOTIFICATION_CHOICES,
-    PRESENCE_ACTION,
-)
-from .whatsapp_content import get_action_label, get_localized
+from .template import DEFAULT_NOTIFICATION_MESSAGES, NOTIFICATION_CHOICES
 
 logger = logging.getLogger(__name__)
 
@@ -241,20 +236,8 @@ class Template(models.Model):
 
     @property
     def action(self):
-        """The call-to-action this template links to, or None when it has none.
-
-        ``disable_presence_confirmation`` drops the presence request instance
-        wide: the appointment is still announced, only nothing asks the
-        recipient to answer whether they will be there. Resolved here rather
-        than at each call site so every channel — the email button, the SMS
-        link, the WhatsApp call-to-action — agrees on it.
-        """
         if not self._action:
-            self._action = (
-                DEFAULT_NOTIFICATION_MESSAGES.get(self.event_type) or {}
-            ).get("action")
-        if self._action == PRESENCE_ACTION and config.disable_presence_confirmation:
-            return None
+            self._action = DEFAULT_NOTIFICATION_MESSAGES[self.event_type].get("action")
         return self._action
 
     action_label = models.CharField(
@@ -669,12 +652,14 @@ class TemplateValidation(ModelCeleryAbstract):
         approved call-to-action button: changing it silently breaks every link
         already approved, so the validation must show up as outdated.
         """
+        from .whatsapp_content import get_localized
+
         tpl = self.template
         parts = [
             get_localized(tpl, "template_subject", self.language_code),
             get_localized(tpl, "template_content", self.language_code),
             get_localized(tpl, "template_content_html", self.language_code),
-            get_action_label(tpl, self.language_code),
+            str(tpl.action_label or ""),
             str(config.backend_base_url or ""),
             # Signs bodies that would otherwise end on a variable.
             str(config.site_name or ""),
@@ -855,10 +840,7 @@ class Message(ModelCeleryAbstract):
     @property
     def action_label(self):
         if self.template:
-            # Not a modeltranslation field: the built-in templates store a lazy
-            # string, which would otherwise resolve under the active locale.
-            return get_action_label(self.template, self.language)
-        return None
+            return self.template.action_label
 
     additionnal_link_args = models.JSONField(blank=True, null=True)
 
@@ -1188,9 +1170,7 @@ class Message(ModelCeleryAbstract):
 
     @property
     def language(self):
-        if self.sent_to and self.sent_to.preferred_language:
-            return self.sent_to.preferred_language
-        return settings.LANGUAGE_CODE
+        return self.sent_to.preferred_language or settings.LANGUAGE_CODE
 
     def _render_template_string(self, template_str: str, autoescape: bool = False):
         """Render a Jinja2 string with this message's locale, timezone and context.
@@ -1242,12 +1222,7 @@ class Message(ModelCeleryAbstract):
                 self.pk, field, self.template_system_name, self.language,
             )
 
-            # modeltranslation resolves a translated field against the
-            # *active* language, and the built-in defaults are lazy strings:
-            # read outside the override they yield the worker locale (or the
-            # locale of whichever request happens to trigger the render)
-            # instead of the recipient's.
-            template_str = get_localized(self.template, field, self.language)
+            template_str = str(getattr(self.template, field))
             logger.debug(
                 "render: template_str for field=%s length=%d",
                 field, len(template_str) if template_str else 0,

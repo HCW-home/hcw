@@ -151,8 +151,7 @@ class Consultation(models.Model):
         help_text=_(
             "Auto-created for an online Appointment without explicit consultation; "
             "hidden from practitioner and patient lists, auto-closed once the "
-            "delay configured in auto_close_temporary_consultations_minutes has "
-            "elapsed on top of the appointment join window."
+            "appointment join window has elapsed."
         ),
     )
 
@@ -209,18 +208,6 @@ class AppointmentStatus(models.TextChoices):
     cancelled = "cancelled", _("Cancelled")
 
 
-# Statuses whose call room stays reachable. Qualifying an appointment —
-# completed or no-show, set by hand or by the outcome task — must never lock
-# participants out: a call that dropped, or one closed too early, has to be
-# rejoinable. Only a cancelled appointment and a draft one (never sent to its
-# participants) have no room to enter.
-JOINABLE_APPOINTMENT_STATUSES = (
-    AppointmentStatus.scheduled,
-    AppointmentStatus.completed,
-    AppointmentStatus.noshow,
-)
-
-
 class Appointment(models.Model):
     room_uuid = models.UUIDField(
         _("room UUID"), default=uuid.uuid4, editable=False, unique=True
@@ -266,11 +253,6 @@ class Appointment(models.Model):
         null=True,
         blank=True,
         help_text=_("JSON array of transcript lines with timestamps and speakers"),
-    )
-    transcript_posted_lines = models.PositiveIntegerField(
-        _("transcript lines posted"),
-        default=0,
-        help_text=_("Number of transcript lines already posted in the consultation chat"),
     )
 
     # Hidden from native API; only exposed via FHIR Appointment.identifier.
@@ -470,7 +452,7 @@ class ConsultationKey(models.Model):
         verbose_name_plural = _("consultation keys")
         constraints = [
             models.CheckConstraint(
-                condition=(
+                check=(
                     models.Q(user__isnull=False, queue__isnull=True)
                     | models.Q(user__isnull=True, queue__isnull=False)
                 ),

@@ -17,7 +17,6 @@ from users.phone import MAX_PHONE_LENGTH
 from users.validators import validate_phone_number
 
 from .models import (
-    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     AppointmentStatus,
     BookingSlot,
@@ -145,10 +144,6 @@ class ConsultationUserSerializer(serializers.ModelSerializer):
             "timezone",
             "temporary",
             "specialities",
-            # Read by the front to mint an encryption envelope for a colleague
-            # put on a roster: they reach the chat without the explicit
-            # visibility flag, so they need the key too.
-            "is_practitioner",
             "public_key",
             "public_key_fingerprint",
         ]
@@ -643,76 +638,14 @@ class ConsultationSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return None
 
 
-def accessible_consultation(context, consultation):
-    """Return ``consultation`` if the requesting user may read it, else None.
-
-    The appointment scopes are wider than the consultation rule — a plain
-    participant, a colleague visible through ``users_visibility`` — so every
-    payload that carries consultation content behind an appointment has to ask
-    this before handing it out.
-
-    Memoised on the serializer context: a page repeats the same handful of
-    consultations and each check costs a query.
-    """
-    from .utils import can_access_consultation
-
-    if consultation is None:
-        return None
-    cache = context.setdefault("_consultation_access", {})
-    if consultation.pk not in cache:
-        user = getattr(context.get("request"), "user", None)
-        cache[consultation.pk] = can_access_consultation(user, consultation)
-    return consultation if cache[consultation.pk] else None
-
-
-def check_consultation_authority(context, consultation_pk):
-    """Raise unless the requesting user may write on this consultation.
-
-    Hanging an appointment, a reminder or a prescription on a consultation is a
-    write on that consultation, so it takes the `accessible_by` scope and not
-    the wider read one. Left unchecked it is also a *read* grant: the author
-    lands on the roster of what they just created, which opens the follow-up
-    back to them. An out-of-reach consultation is reported as missing rather
-    than forbidden, so the field cannot be used to probe for existence.
-    """
-    if consultation_pk is None:
-        return
-    user = context["request"].user
-    if not Consultation.objects.accessible_by(user).filter(pk=consultation_pk).exists():
-        raise serializers.ValidationError(_("Consultation not found."))
-
-
-def appointment_can_join(appointment, request):
-    """Whether the requesting user is allowed into this appointment's call.
-
-    Mirrors the guard in the `join` endpoints so every front-end entry point can
-    hide the button from a single flag instead of restating the rule. An
-    appointment already qualified as completed or no-show stays joinable: the
-    call can always be resumed.
-    """
-    if not request or not request.user.is_authenticated:
-        return False
-    if appointment.type != Type.online:
-        return False
-    if appointment.status not in JOINABLE_APPOINTMENT_STATUSES:
-        return False
-    if appointment.consultation_id and appointment.consultation.closed_at:
-        return False
-    return any(
-        p.user_id == request.user.pk and p.is_active
-        for p in appointment.participant_set.all()
-    )
-
-
 class AppointmentSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
     consultation_id = serializers.IntegerField(required=False, allow_null=True)
     # Optional: an appointment without a schedule is immediate and starts now.
     scheduled_at = serializers.DateTimeField(required=False, allow_null=True)
-    # The appointment read scope is wider than the consultation one (plain
-    # participants, colleagues visible through `users_visibility`), so the title
-    # is only handed out to someone the consultation itself would let in.
-    consultation_title = serializers.SerializerMethodField()
+    consultation_title = serializers.CharField(
+        source="consultation.title", read_only=True, default=None
+    )
     participants = ParticipantReadSerializer(
         many=True, read_only=True, required=False, source="participant_set"
     )
@@ -756,27 +689,26 @@ class AppointmentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at"]
 
     def get_can_join(self, obj):
-        return appointment_can_join(obj, self.context.get("request"))
+        """Whether the requesting user is allowed into this appointment's call.
 
-    def get_consultation_title(self, obj):
-        consultation = accessible_consultation(self.context, obj.consultation)
-        return consultation.title if consultation else None
-
-    def validate_consultation_id(self, value):
-        check_consultation_authority(self.context, value)
-        return value
+        Mirrors the guard in the `join` endpoints so every front-end entry point
+        can hide the button from a single flag instead of restating the rule.
+        """
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if obj.type != Type.online:
+            return False
+        if obj.consultation_id and obj.consultation.closed_at:
+            return False
+        return any(
+            p.user_id == request.user.pk and p.is_active
+            for p in obj.participant_set.all()
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get("request")
-
-        # The id follows the title: left in place it is an invitation for the
-        # client to link to the follow-up and open its chat, both of which
-        # answer 404 for someone the consultation does not let in.
-        if data.get("consultation_id") and not accessible_consultation(
-            self.context, instance.consultation
-        ):
-            data["consultation_id"] = None
 
         if request and request.user.is_authenticated:
             user_tz = request.user.user_tz
@@ -864,25 +796,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
             )
             new_users = set(user.id for user in participants_ids)
 
-            # Add new participants or reactivate existing ones. An explicit
-            # visibility entry is a decision, so it also applies downwards:
-            # a participant removed while visible and added back with the box
-            # unticked would otherwise keep the follow-up their row still
-            # carried.
+            # Add new participants or reactivate existing ones
             for user_id in new_users - existing_users:
-                stated = user_id in visibility_map
-                visible = visibility_map.get(user_id, False)
-                participant = AppointmentSerializer.add_or_reactivate_participant(
+                AppointmentSerializer.add_or_reactivate_participant(
                     appointment,
                     user_id,
-                    visible,
-                    downgrade_visibility=stated,
+                    visibility_map.get(user_id, False),
                 )
-                if (
-                    not participant.is_consultation_visible
-                    and participant.appointment.consultation_id
-                ):
-                    AppointmentSerializer._revoke_consultation_key(participant)
 
             # Deactivate removed participants
             removed_users = existing_users - new_users
@@ -1045,45 +965,22 @@ class AppointmentAddParticipantsSerializer(serializers.Serializer):
 
         added = []
         for user in self.validated_data.get("participants_ids", []):
-            # The modal always states the box's value, so an entry in the map
-            # is a decision either way: honour it downwards too, or someone
-            # added back with the box unticked keeps the access their previous
-            # row was granted.
-            stated = user.pk in visibility_map
-            visible = visibility_map.get(user.pk, False)
             added.append(
-                self._attach(appointment, user, visible, downgrade=stated)
+                AppointmentSerializer.add_or_reactivate_participant(
+                    appointment, user, visibility_map.get(user.pk, False)
+                )
             )
 
         for temp_participant in self.validated_data.get("temporary_participants", []):
             user = ParticipantSerializer.resolve_user(temp_participant, request_user)
             added.append(
-                self._attach(
+                AppointmentSerializer.add_or_reactivate_participant(
                     appointment,
                     user,
                     temp_participant.get("is_consultation_visible", False),
-                    downgrade=True,
                 )
             )
         return added
-
-    @staticmethod
-    def _attach(appointment, user, visible, downgrade):
-        """Add the participant and keep their consultation key in step.
-
-        Revoking reads the row's resulting state, not what was asked for: a
-        payload that leaves visibility unstated keeps an existing grant, and
-        dropping the key there would leave a reader unable to decrypt.
-        """
-        participant = AppointmentSerializer.add_or_reactivate_participant(
-            appointment, user, visible, downgrade_visibility=downgrade
-        )
-        if (
-            not participant.is_consultation_visible
-            and participant.appointment.consultation_id
-        ):
-            AppointmentSerializer._revoke_consultation_key(participant)
-        return participant
 
 
 class AppointmentCreateSerializer(AppointmentSerializer):
@@ -1191,16 +1088,11 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         if not dont_invite_me:
             participant_users.add(self.context["request"].user)
 
-        # Create participants from consultation. Someone auto-invited here can
-        # also be listed in participants_ids with an explicit visibility flag —
-        # a practitioner picked as a participant who happens to be the
-        # beneficiary, for instance. Their row is only created once, so that
-        # flag has to be read here or the access asked for is silently lost.
+        # Create participants from consultation
         for participant_user in participant_users:
             Participant.objects.create(
                 appointment=appointment,
                 user=participant_user,
-                is_consultation_visible=visibility_map.get(participant_user.pk, False),
             )
 
         # Users from participants_ids
@@ -1261,17 +1153,7 @@ class AppointmentCreateSerializer(AppointmentSerializer):
         if not constance_config.master_public_key:
             return
 
-        # Only the participants the visibility box let in read this chat, so
-        # only they get an envelope: wrapping the key for someone the access
-        # rule keeps out would hand them the conversation anyway.
-        visible_ids = set(
-            Participant.objects.filter(
-                appointment=appointment,
-                is_active=True,
-                is_consultation_visible=True,
-            ).values_list("user_id", flat=True)
-        )
-        user_recipients = [u for u in participant_users if u.pk in visible_ids]
+        user_recipients = list(participant_users)
         for u in (consultation.owned_by, consultation.created_by, consultation.beneficiary):
             if u and u not in user_recipients:
                 user_recipients.append(u)
@@ -1293,16 +1175,13 @@ class AttachmentMetadataSerializer(serializers.Serializer):
 
 class ConsultationMessageSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(default=serializers.CurrentUserDefault())
-    # Read-only: notification deep links carry a message id and need the
-    # conversation it belongs to in order to open anything.
-    consultation = serializers.PrimaryKeyRelatedField(read_only=True)
+    # consultation = serializers.PrimaryKeyRelatedField(read_only=True)
     attachment = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = [
             "id",
-            "consultation",
             "content",
             "attachment",
             "recording_url",
@@ -1434,20 +1313,10 @@ class BookingSlotSerializer(serializers.ModelSerializer):
 
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
-    # Being on an appointment roster does not by itself open the consultation
-    # behind it: a guest invited to a single call must not read the follow-up.
-    # The nested object, the title and the bare id are all gated on the access
-    # rule — handing out the id alone was enough for the client to offer a link
-    # to the follow-up and a chat that both answered 404.
-    consultation = serializers.SerializerMethodField()
-    # Kept alongside the nested consultation so this payload can be consumed
-    # exactly like the one from AppointmentSerializer.
-    consultation_id = serializers.SerializerMethodField()
-    consultation_title = serializers.SerializerMethodField()
+    consultation = ConsultationSerializer(read_only=True)
     participants = ParticipantReadSerializer(
         many=True, read_only=True, source="participant_set"
     )
-    can_join = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
@@ -1458,31 +1327,11 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
             "end_expected_at",
             "type",
             "consultation",
-            "consultation_id",
-            "consultation_title",
             "created_by",
             "status",
             "created_at",
             "participants",
-            "can_join",
         ]
-
-    def get_can_join(self, obj):
-        return appointment_can_join(obj, self.context.get("request"))
-
-    def get_consultation(self, obj):
-        consultation = accessible_consultation(self.context, obj.consultation)
-        if consultation is None:
-            return None
-        return ConsultationSerializer(consultation, context=self.context).data
-
-    def get_consultation_id(self, obj):
-        consultation = accessible_consultation(self.context, obj.consultation)
-        return consultation.pk if consultation else None
-
-    def get_consultation_title(self, obj):
-        consultation = accessible_consultation(self.context, obj.consultation)
-        return consultation.title if consultation else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -1734,10 +1583,6 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
-    def validate_consultation(self, value):
-        check_consultation_authority(self.context, value.pk if value else None)
-        return value
-
 
 class ReminderSerializer(serializers.ModelSerializer):
     created_by = ConsultationUserSerializer(read_only=True)
@@ -1798,10 +1643,6 @@ class ReminderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
-    def validate_consultation_id(self, value):
-        check_consultation_authority(self.context, value.pk if value else None)
-        return value
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

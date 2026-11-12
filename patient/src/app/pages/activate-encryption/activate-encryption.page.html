@@ -1,18 +1,14 @@
-<ion-content id="main-content" role="main" class="ion-padding">
+<ion-content class="ion-padding">
   <ion-card>
     <ion-card-content>
-      <h1>{{ 'activateEncryption.title' | translate }}</h1>
+      <h2>{{ 'activateEncryption.title' | translate }}</h2>
       <p>{{ 'activateEncryption.description' | translate }}</p>
 
-      <!-- Associated through aria-labelledby on the control, not for/id: Ionic
-           generates its own id for the inner native input and offers no way to
-           set it, so a for attribute here would point at nothing. -->
-      <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
-      <label class="field-label" id="activate-encryption-field-1-label">{{ 'activateEncryption.passphrase' | translate }}</label>
       <ion-input
         type="password"
         [(ngModel)]="passphrase"
-        aria-labelledby="activate-encryption-field-1-label"
+        [label]="'activateEncryption.passphrase' | translate"
+        labelPlacement="floating"
         autocomplete="off"
         [disabled]="saving()">
       </ion-input>

@@ -12,6 +12,7 @@ import {
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { RoutePaths } from '../../../../core/constants/routes';
 import { ActionHandlerService } from '../../../../core/services/action-handler.service';
+import { ConsultationService } from '../../../../core/services/consultation.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import {
   FormGroup,
@@ -61,6 +62,7 @@ export class Login implements OnInit {
   private formBuilder = inject(FormBuilder);
   private adminAuthService = inject(Auth);
   private actionHandler = inject(ActionHandlerService);
+  private consultationService = inject(ConsultationService);
   public validationService = inject(ValidationService);
   private t = inject(TranslationService);
   private userService = inject(UserService);
@@ -166,11 +168,33 @@ export class Login implements OnInit {
   private navigateAfterLogin(): void {
     const action = this.route.snapshot.queryParamMap.get('action');
     const id = this.route.snapshot.queryParamMap.get('id');
-    const model = this.route.snapshot.queryParamMap.get('model');
 
-    if (action) {
-      this.actionHandler.handleAction(action, id, model);
-    } else if (!this.actionHandler.runPendingAction()) {
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: participant => {
+          const consultation = participant.appointment.consultation;
+          const consultationId =
+            typeof consultation === 'object'
+              ? (consultation as { id: number }).id
+              : consultation;
+          this.router.navigate(
+            ['/', RoutePaths.USER, RoutePaths.CONSULTATIONS, consultationId],
+            {
+              queryParams: {
+                join: 'true',
+                appointmentId: participant.appointment.id,
+              },
+            }
+          );
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        },
+      });
+    } else if (action) {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+    } else {
       this.router.navigate([`/${RoutePaths.USER}`, RoutePaths.DASHBOARD]);
     }
   }

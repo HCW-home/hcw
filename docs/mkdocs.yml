@@ -1,6 +1,6 @@
 site_name: HCW@Home Documentation
 site_description: Documentation for HCW@Home V6 teleconsultation platform
-site_url: https://docs-v6.hcw-at-home.com/
+site_url: https://hcw-at-home.com/docs
 
 theme:
   name: material
@@ -31,17 +31,6 @@ nav:
   - Get Started:
     - Overview: index.md
     - Architecture: architecture.md
-  - User Guide:
-    - Overview: user-guide/index.md
-    - Signing In: user-guide/signing-in.md
-    - Navigating the Platform: user-guide/navigation.md
-    - Creating a Follow-up: user-guide/create-follow-up.md
-    - Managing a Follow-up: user-guide/manage-follow-up.md
-    - Running a Video Consultation: user-guide/video-consultation.md
-    - Closing a Follow-up: user-guide/closing-follow-up.md
-    - Appointments and Calendar: user-guide/appointments.md
-    - Your Profile and Preferences: user-guide/profile.md
-    - What Participants See: user-guide/participants.md
   - Use Cases:
     - Appointment Management: use-cases/appointment-management.md
     - Video Call Scheduling: use-cases/video-call-scheduling.md
@@ -58,13 +47,10 @@ nav:
     - End-to-End Encryption: admin/encryption.md
     - FHIR R4 Integration: admin/fhir.md
     - Advanced Options: admin/advanced-options.md
-  - Development:
-    - Guidelines: development/guidelines.md
   - Deployment:
     - Docker Compose: deployment/docker-compose.md
     - Debian Packages: deployment/debian.md
     - Environment Variables: deployment/environment-variables.md
-    - Encryption at Rest: deployment/encryption-at-rest.md
 
 extra_css:
   - assets/css/extra.css

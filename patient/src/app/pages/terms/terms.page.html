@@ -1,11 +1,11 @@
-<ion-content id="main-content" role="main">
+<ion-content>
   <div class="terms-container">
     @if (loading) {
       <div class="loading-wrapper">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
     } @else if (term) {
-      <h1 class="terms-title">{{ term.name }}</h1>
+      <h2 class="terms-title">{{ term.name }}</h2>
       <div class="terms-content" [innerHTML]="term.content"></div>
     }
   </div>
@@ -15,7 +15,7 @@
   <ion-footer class="terms-footer ion-no-border">
     <div class="footer-inner">
       <div class="language-selector">
-        <ion-icon name="globe-outline" aria-hidden="true"></ion-icon>
+        <ion-icon name="globe-outline"></ion-icon>
         <select [(ngModel)]="selectedLanguage" (ngModelChange)="onLanguageChange($event)">
           @for (lang of availableLanguages(); track lang.code) {
             <option [value]="lang.code">{{ lang.nativeName }}</option>

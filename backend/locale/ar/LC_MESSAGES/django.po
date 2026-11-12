@@ -169,15 +169,12 @@ msgstr "مؤقت"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; "
-"hidden from practitioner and patient lists, auto-closed once the delay "
-"configured in auto_close_temporary_consultations_minutes has elapsed on "
-"top of the appointment join window."
+"Auto-created for an online Appointment without explicit consultation; hidden "
+"from practitioner and patient lists, auto-closed once the appointment join "
+"window has elapsed."
 msgstr ""
-"يُنشأ تلقائيًا لموعد عبر الإنترنت بدون استشارة صريحة؛ مخفي من قوائم "
-"الممارس والمريض، ويُغلق تلقائيًا بعد انقضاء المهلة المضبوطة في "
-"auto_close_temporary_consultations_minutes إضافةً إلى نافذة الانضمام إلى "
-"الموعد."
+"يُنشأ تلقائيًا لموعد عبر الإنترنت بدون استشارة صريحة؛ مخفي من قوائم الممارس "
+"والمريض، ويُغلق تلقائيًا بعد انقضاء نافذة الانضمام إلى الموعد."
 
 #: consultations/models.py:168
 msgid ""
@@ -246,19 +243,6 @@ msgstr "النص المكتوب"
 #: consultations/models.py:250
 msgid "JSON array of transcript lines with timestamps and speakers"
 msgstr "مصفوفة JSON لأسطر النص المكتوب مع الطوابع الزمنية والمتحدثين"
-
-#: consultations/models.py:271
-msgid "transcript lines posted"
-msgstr "أسطر النص المكتوب المنشورة"
-
-#: consultations/models.py:273
-msgid "Number of transcript lines already posted in the consultation chat"
-msgstr "عدد أسطر النص المكتوب المنشورة بالفعل في محادثة الاستشارة"
-
-#: consultations/tasks.py:338
-#, python-format
-msgid "Transcript: appointment on %(date)s"
-msgstr "النص المكتوب: موعد %(date)s"
 
 #: consultations/models.py:271 consultations/models.py:294
 #: consultations/models.py:334
@@ -705,10 +689,6 @@ msgstr "المستلم مطلوب."
 msgid "Unable to close consultation with appointment scheduled in future"
 msgstr "لا يمكن إغلاق استشارة لها موعد مجدول في المستقبل"
 
-#: consultations/views.py:331
-msgid "Unable to close consultation with upcoming reminders"
-msgstr "لا يمكن إغلاق استشارة لها تذكيرات قادمة"
-
 #: consultations/views.py:386 consultations/views.py:433
 #: consultations/views.py:656 consultations/views.py:802
 #: consultations/views.py:860 consultations/views.py:937 users/views.py:653
@@ -1029,11 +1009,11 @@ msgstr "عدد الساعات بعد الإغلاق قبل حذف المتابع
 
 #: core/settings.py:905
 msgid ""
-"Minutes after the appointment join window closes before a temporary "
-"appointment-chat consultation is automatically closed (0 to disable)"
+"Automatically close temporary appointment-chat consultations once the "
+"appointment join window has elapsed"
 msgstr ""
-"عدد الدقائق بعد انقضاء نافذة الانضمام إلى الموعد قبل الإغلاق التلقائي "
-"لاستشارة محادثة الموعد المؤقتة (0 للتعطيل)"
+"إغلاق استشارات محادثة الموعد المؤقتة تلقائيًا بعد انقضاء نافذة الانضمام إلى "
+"الموعد"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"
@@ -2329,16 +2309,32 @@ msgid "New message in consultation"
 msgstr "رسالة جديدة في الاستشارة"
 
 #: messaging/template.py:104
-msgid "New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\". Open the consultation to read it."
-msgstr "رسالة جديدة من {{ obj.created_by.name }} في الاستشارة \"{{ obj.consultation.title }}\". افتح الاستشارة لقراءتها."
+msgid "New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\": {{ obj.content }}"
+msgstr "رسالة جديدة من {{ obj.created_by.name }} في الاستشارة \"{{ obj.consultation.title }}\": {{ obj.content }}"
 
 #: messaging/template.py:109
-msgid "<p>New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\".</p><p>Open the consultation to read it.</p>"
-msgstr "<p>رسالة جديدة من {{ obj.created_by.name }} في الاستشارة \"{{ obj.consultation.title }}\".</p><p>افتح الاستشارة لقراءتها.</p>"
+msgid "<p>New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
+msgstr "<p>رسالة جديدة من {{ obj.created_by.name }} في الاستشارة \"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
 
 #: messaging/template.py:116
 msgid "Click here to answer"
 msgstr "انقر هنا للرد"
+
+#: messaging/template.py:119
+msgid "Verify your email address"
+msgstr "تحقق من عنوان بريدك الإلكتروني"
+
+#: messaging/template.py:120
+msgid "We are requiring to verify your email address."
+msgstr "نحتاج إلى التحقق من عنوان بريدك الإلكتروني."
+
+#: messaging/template.py:122
+msgid "<p>We are requiring to verify your email address.</p>"
+msgstr "<p>نحتاج إلى التحقق من عنوان بريدك الإلكتروني.</p>"
+
+#: messaging/template.py:127
+msgid "Verify my email"
+msgstr "تأكيد بريدي الإلكتروني"
 
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
@@ -2724,6 +2720,10 @@ msgstr "الاستشارة مغلقة بالفعل"
 msgid "%(user_name)s left the meeting #%(consultation_id)s"
 msgstr "غادر %(user_name)s الاجتماع رقم %(consultation_id)s"
 
+#: users/views.py:1722
+msgid "A verification email has been sent to your email address."
+msgstr "تم إرسال رسالة تحقق إلى عنوان بريدك الإلكتروني."
+
 #: users/views.py:2062
 msgid ""
 "Access URL is only available for patients without any automatic channel "
@@ -2731,47 +2731,3 @@ msgid ""
 msgstr ""
 "رابط الوصول متاح فقط للمرضى الذين ليس لديهم أي قناة تلقائية (بريد إلكتروني/"
 "رسائل قصيرة/واتساب) أو الذين يستخدمون التواصل اليدوي"
-
-#: messaging/template.py:126
-msgid "To finish creating your account, please use this verification code: {{ obj.verification_code }}"
-msgstr "لإتمام إنشاء حسابك، يرجى استخدام رمز التحقق هذا: {{ obj.verification_code }}"
-
-#: messaging/template.py:130
-msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
-msgstr "<p>لإتمام إنشاء حسابك، يرجى استخدام رمز التحقق هذا: <strong>{{ obj.verification_code }}</strong></p>"
-
-#: users/views.py:1801
-msgid "Invalid or expired verification code."
-msgstr "رمز التحقق غير صالح أو منتهي الصلاحية."
-
-#: messaging/template.py:122
-msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
-msgstr "{% if obj.email %}تحقّق من بريدك الإلكتروني{% else %}تحقّق من رقم هاتفك{% endif %}"
-
-#: users/views.py:1786
-msgid "Registration is currently disabled."
-msgstr "التسجيل معطّل حاليًا."
-
-#: users/views.py:1801
-msgid "A verification code has been sent to you."
-msgstr "تم إرسال رمز تحقق إليك."
-
-#: users/views.py:1912
-msgid "Account verified successfully."
-msgstr "تم التحقق من الحساب بنجاح."
-
-#: users/views.py:1943
-msgid "If this account needs verification, a code has been sent."
-msgstr "إذا كان هذا الحساب بحاجة إلى تحقق، فقد تم إرسال رمز."
-
-#: users/serializers.py:345
-msgid "This instance cannot send text messages. Use an email address."
-msgstr "لا يمكن لهذه المنصة إرسال رسائل نصية. استخدم بريدًا إلكترونيًا."
-
-#: users/identifier.py:34
-msgid "Enter your email address or phone number."
-msgstr "أدخل بريدك الإلكتروني أو رقم هاتفك."
-
-#: users/identifier.py:45
-msgid "Enter a valid email address."
-msgstr "أدخل بريدًا إلكترونيًا صالحًا."

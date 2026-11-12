@@ -1,7 +1,5 @@
-import json
 import logging
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import timedelta
 
 import boto3
 from asgiref.sync import async_to_sync
@@ -13,17 +11,12 @@ from constance import config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
-from django.core.files.base import ContentFile
-from django.db import transaction
 from django.db.models import Count, Q
-from django.utils import timezone, translation
-from django.utils.translation import gettext
+from django.utils import timezone
 from messaging.models import Message
 from django_tenants.utils import get_tenant_model, tenant_context
 
 from .assignments import AssignmentManager
-from .utils import is_immediate_appointment, transcription_active_key
 from .models import (
     Appointment,
     AppointmentRecording,
@@ -61,25 +54,27 @@ def handle_invites(appointment_id):
     participants = Participant.objects.filter(is_invited=True, appointment=appointment)
 
     if appointment.status == AppointmentStatus.scheduled:
-        rescheduled = bool(
+        if (
             appointment.previous_scheduled_at
             and appointment.previous_scheduled_at != appointment.scheduled_at
-        )
-        if rescheduled:
+        ):
+            template_system_name = "appointment_updated"
             participants = participants.filter(is_active=True)
         else:
             participants = participants.filter(is_notified=False)
-
-        # Appointment landing inside the window it can already be joined in:
-        # asking to confirm a presence, or announcing a move to a time that is
-        # already here, would both be answered after the call is over. Invite
-        # them to join straight away instead.
-        if is_immediate_appointment(appointment):
-            template_system_name = "invitation_to_ongoing_appointment"
-        elif rescheduled:
-            template_system_name = "appointment_updated"
-        else:
-            template_system_name = "invitation_to_appointment"
+            # Appointment created inside the last-reminder window: the "join now"
+            # reminder would never reach them in time, so invite them to join
+            # straight away instead of asking to confirm their presence.
+            try:
+                last_reminder = int(config.appointment_last_reminder)
+            except (TypeError, ValueError):
+                last_reminder = 0
+            if appointment.scheduled_at <= timezone.now() + timedelta(
+                minutes=last_reminder
+            ):
+                template_system_name = "invitation_to_ongoing_appointment"
+            else:
+                template_system_name = "invitation_to_appointment"
     elif appointment.status == AppointmentStatus.cancelled:
         template_system_name = "appointment_cancelled"
     else:
@@ -301,120 +296,6 @@ def check_recording_ready(self, recording_id):
     )
 
 
-def _temporary_consultation_expiry(consultation, join_limit, default_duration):
-    """Return the moment a temporary consultation stops being reachable.
-
-    That is the end of its latest non-cancelled appointment plus the rejoin
-    window (`call_limit_join_minutes`). Effective end is
-    `appointment.end_expected_at` when set, otherwise
-    `scheduled_at + default_appointment_duration_in_minutes`. A temporary
-    consultation without any appointment falls back to its creation date.
-    """
-    appt = (
-        consultation.appointments.exclude(status=AppointmentStatus.cancelled)
-        .order_by("-scheduled_at")
-        .first()
-    )
-    if not appt:
-        return consultation.created_at
-
-    end = appt.end_expected_at or (
-        appt.scheduled_at + timedelta(minutes=default_duration)
-    )
-    return end + timedelta(minutes=join_limit)
-
-
-@app.task
-def post_transcript(appointment_id):
-    """
-    Post in the chat, as a text file, the live transcript lines not posted yet.
-
-    Every transcription session schedules this when it stops. Nothing is posted
-    while the call is still flagged as transcribed: another session is running
-    then, and it will schedule this again when it stops in turn.
-    """
-    from .models import Message as ConsultationMessage
-
-    if cache.get(transcription_active_key(appointment_id)):
-        return
-
-    appointment = (
-        Appointment.objects.select_related("consultation__created_by")
-        .filter(pk=appointment_id)
-        .first()
-    )
-    if appointment is None or appointment.consultation is None:
-        return
-
-    lines = json.loads(appointment.transcript or "[]")
-    posted = appointment.transcript_posted_lines
-    new_lines = lines[posted:]
-    if not new_lines:
-        return
-
-    consultation = appointment.consultation
-    # Posted like the recordings, on behalf of the creator of the follow-up: in
-    # their language and their time zone.
-    author = consultation.created_by
-    tz = ZoneInfo(author.timezone or settings.TIME_ZONE)
-    with translation.override(author.preferred_language or settings.LANGUAGE_CODE):
-        content = gettext("Transcript: appointment on %(date)s") % {
-            "date": appointment.scheduled_at.astimezone(tz).strftime("%Y-%m-%d %H:%M")
-        }
-    text = "".join(
-        f"[{datetime.fromisoformat(line['timestamp']).astimezone(tz):%H:%M:%S}] "
-        f"{line['speaker']}: {line['text']}\n"
-        for line in new_lines
-    )
-
-    with transaction.atomic():
-        # Claimed first, so that a concurrent run of this task loses here rather
-        # than posting the same lines twice
-        if not Appointment.objects.filter(
-            pk=appointment.pk, transcript_posted_lines=posted
-        ).update(transcript_posted_lines=len(lines)):
-            return
-        message = ConsultationMessage.objects.create(
-            consultation=consultation,
-            created_by=author,
-            event="transcript_available",
-            content=content,
-            attachment=ContentFile(
-                text.encode("utf-8"),
-                # Unique by construction: S3 storage overwrites a file of the same name
-                name=f"transcript_appointment_{appointment.pk}_lines_{posted + 1}-{len(lines)}.txt",
-            ),
-        )
-
-    logger.info(
-        f"Transcript posted for appointment {appointment_id}: "
-        f"{len(new_lines)} lines in message {message.id}"
-    )
-
-
-def _temporary_consultation_expiry(consultation, join_limit, default_duration):
-    """Return the moment a temporary consultation stops being reachable.
-
-    That is the end of its latest non-cancelled appointment plus the rejoin
-    window (`call_limit_join_minutes`). Effective end is
-    `appointment.end_expected_at` when set, otherwise
-    `scheduled_at + default_appointment_duration_in_minutes`. A temporary
-    consultation without any appointment falls back to its creation date.
-    """
-    appt = (
-        consultation.appointments.exclude(status=AppointmentStatus.cancelled)
-        .order_by("-scheduled_at")
-        .first()
-    )
-    if not appt:
-        return consultation.created_at
-
-    end = appt.end_expected_at or (
-        appt.scheduled_at + timedelta(minutes=default_duration)
-    )
-    return end + timedelta(minutes=join_limit)
-
-
 @app.task
 def auto_delete_closed_consultations():
     TenantModel = get_tenant_model()
@@ -432,25 +313,36 @@ def auto_delete_closed_consultations():
             logger.info(f"Auto-deleted {count} closed consultation(s) older than {hours}h")
 
             # Belt-and-suspenders: temporary consultations that somehow stayed
-            # open past their auto-close deadline are also dropped once
-            # auto_delete_hours has elapsed on top of it. Only when auto-close
-            # is configured; otherwise temporaries are meant to persist until
-            # closed manually, so we leave them untouched.
-            close_delay = int(config.auto_close_temporary_consultations_minutes)
-            if close_delay <= 0:
+            # open past the join window are also dropped once their effective
+            # end + call_limit + auto_delete_hours has elapsed. Only when
+            # auto-close is enabled; otherwise temporaries are meant to persist
+            # until closed manually, so we leave them untouched.
+            if not config.auto_close_temporary_consultations:
                 continue
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)
-            delete_threshold = timedelta(minutes=close_delay) + timedelta(hours=hours)
+            delete_threshold = timedelta(hours=hours)
 
             temp_qs = Consultation.objects.filter(
                 temporary=True, closed_at__isnull=True
             )
             temp_deleted = 0
             for consultation in temp_qs:
-                expires_at = _temporary_consultation_expiry(
-                    consultation, join_limit, default_duration
+                appt = (
+                    consultation.appointments.exclude(
+                        status=AppointmentStatus.cancelled
+                    )
+                    .order_by("-scheduled_at")
+                    .first()
                 )
+                if appt:
+                    end = appt.end_expected_at or (
+                        appt.scheduled_at + timedelta(minutes=default_duration)
+                    )
+                    expires_at = end + timedelta(minutes=join_limit)
+                else:
+                    expires_at = consultation.created_at
+
                 if now >= expires_at + delete_threshold:
                     consultation.delete()
                     temp_deleted += 1
@@ -463,43 +355,54 @@ def auto_delete_closed_consultations():
 
 @app.task
 def auto_close_temporary_consultations():
-    """Close temporary consultations left open past their configured delay.
+    """Close temporary consultations whose appointment join window has elapsed.
 
-    No-op unless `auto_close_temporary_consultations_minutes` is greater than
-    zero; at zero, temporary consultations stay open until closed manually.
+    No-op unless the `auto_close_temporary_consultations` setting is enabled;
+    when disabled, temporary consultations stay open until closed manually.
 
-    The delay runs from the end of the appointment join window, so a
-    consultation is never closed while participants can still rejoin the call:
-    `now >= effective_end + call_limit_join_minutes + delay`.
+    For each temp consultation we look at its latest non-cancelled appointment.
+    Effective end is `appointment.end_expected_at` when set, otherwise
+    `scheduled_at + default_appointment_duration_in_minutes`. The consultation
+    is closed once `now >= effective_end + call_limit_join_minutes`.
     """
     TenantModel = get_tenant_model()
     for tenant in TenantModel.objects.exclude(schema_name="public"):
         with tenant_context(tenant):
-            close_delay = int(config.auto_close_temporary_consultations_minutes)
-            if close_delay <= 0:
+            if not config.auto_close_temporary_consultations:
                 continue
             now = timezone.now()
             join_limit = int(config.call_limit_join_minutes)
             default_duration = int(config.default_appointment_duration_in_minutes)
-            close_threshold = timedelta(minutes=close_delay)
 
             qs = Consultation.objects.filter(
                 temporary=True, closed_at__isnull=True
             )
             closed = 0
             for consultation in qs:
-                expires_at = _temporary_consultation_expiry(
-                    consultation, join_limit, default_duration
+                appt = (
+                    consultation.appointments.exclude(
+                        status=AppointmentStatus.cancelled
+                    )
+                    .order_by("-scheduled_at")
+                    .first()
                 )
-                if now >= expires_at + close_threshold:
+                if not appt:
+                    consultation.closed_at = now
+                    consultation.save(update_fields=["closed_at"])
+                    closed += 1
+                    continue
+
+                end = appt.end_expected_at or (
+                    appt.scheduled_at + timedelta(minutes=default_duration)
+                )
+                if now >= end + timedelta(minutes=join_limit):
                     consultation.closed_at = now
                     consultation.save(update_fields=["closed_at"])
                     closed += 1
 
             if closed:
                 logger.info(
-                    f"Auto-closed {closed} temporary consultation(s) more than "
-                    f"{close_delay}min past their join window"
+                    f"Auto-closed {closed} temporary consultation(s) past join window"
                 )
 
 

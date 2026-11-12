@@ -35,6 +35,32 @@
   box-shadow: var(--shadow-sm);
 }
 
+.wizard-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 9px;
+  background: var(--app-surface);
+  color: var(--app-ink-2);
+  cursor: pointer;
+  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--app-surface-muted);
+    border-color: var(--app-teal);
+    color: var(--app-teal-dark);
+  }
+}
+
 .wizard-progress {
   flex: 1;
   min-width: 0;
@@ -287,14 +313,7 @@ app-search-bar {
   gap: var(--app-spacing-sm);
 }
 
-// Now a real <button>; these resets keep the previous <div> rendering.
 .reason-item {
-  width: 100%;
-  background: none;
-  border: 0;
-  font: inherit;
-  color: inherit;
-  text-align: start;
   display: flex;
   align-items: center;
   gap: var(--app-spacing-md);
@@ -500,14 +519,7 @@ app-search-bar {
   gap: var(--app-spacing-md);
 }
 
-// Now a real <button>; these resets keep the previous <div> rendering.
 .doctor-card {
-  width: 100%;
-  background: none;
-  border: 0;
-  font: inherit;
-  color: inherit;
-  text-align: start;
   margin: 0;
   cursor: pointer;
   transition: border-color 0.2s var(--app-ease), box-shadow 0.2s var(--app-ease);
@@ -897,48 +909,6 @@ app-search-bar {
     font-family: inherit;
   }
 
-  // The sign in / sign up form, dressed as one of the wizard's own cards.
-  .auth-panel {
-    max-width: 460px;
-    margin: var(--app-spacing-xl) auto 0;
-    padding: var(--app-spacing-2xl);
-    background: var(--app-surface);
-    border: 1px solid var(--app-border);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-sm);
-    text-align: left;
-  }
-
-  .auth-panel-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--app-spacing-md);
-    margin-bottom: var(--app-spacing-lg);
-
-    h3 {
-      margin: 0;
-      font-size: 1.0625rem;
-      font-weight: 700;
-      color: var(--app-ink-1);
-    }
-  }
-
-  .auth-panel-back {
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--app-teal-dark);
-    font-family: inherit;
-    font-size: .875rem;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
   .choice-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -962,8 +932,7 @@ app-search-bar {
     border: 1px solid var(--app-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
-    // No cursor:pointer — the card itself is no longer clickable; its
-    // inner button is.
+    cursor: pointer;
     transition:
       border-color .2s var(--app-ease),
       box-shadow .2s var(--app-ease),
@@ -1020,10 +989,6 @@ app-search-bar {
     }
 
     .choice-card {
-      padding: var(--app-spacing-xl);
-    }
-
-    .auth-panel {
       padding: var(--app-spacing-xl);
     }
   }

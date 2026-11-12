@@ -169,16 +169,13 @@ msgstr "temporär"
 
 #: consultations/models.py:151
 msgid ""
-"Auto-created for an online Appointment without explicit consultation; "
-"hidden from practitioner and patient lists, auto-closed once the delay "
-"configured in auto_close_temporary_consultations_minutes has elapsed on "
-"top of the appointment join window."
+"Auto-created for an online Appointment without explicit consultation; hidden"
+" from practitioner and patient lists, auto-closed once the appointment join "
+"window has elapsed."
 msgstr ""
-"Automatisch für einen Online-Termin ohne explizite Beratung erstellt; in "
-"den Listen von Behandler und Patient ausgeblendet und automatisch "
-"geschlossen, sobald die in auto_close_temporary_consultations_minutes "
-"konfigurierte Verzögerung zusätzlich zum Beitrittsfenster des Termins "
-"abgelaufen ist."
+"Automatisch für einen Online-Termin ohne explizite Beratung erstellt; in den"
+" Listen von Behandler und Patient ausgeblendet und automatisch geschlossen, "
+"sobald das Beitrittsfenster des Termins abgelaufen ist."
 
 #: consultations/models.py:168
 msgid ""
@@ -248,19 +245,6 @@ msgstr "Transkript"
 #: consultations/models.py:250
 msgid "JSON array of transcript lines with timestamps and speakers"
 msgstr "JSON-Array der Transkriptzeilen mit Zeitstempeln und Sprechern"
-
-#: consultations/models.py:271
-msgid "transcript lines posted"
-msgstr "veröffentlichte Transkriptzeilen"
-
-#: consultations/models.py:273
-msgid "Number of transcript lines already posted in the consultation chat"
-msgstr "Anzahl der bereits im Chat der Beratung veröffentlichten Transkriptzeilen"
-
-#: consultations/tasks.py:338
-#, python-format
-msgid "Transcript: appointment on %(date)s"
-msgstr "Transkript: Termin am %(date)s"
 
 #: consultations/models.py:271 consultations/models.py:294
 #: consultations/models.py:334
@@ -733,10 +717,6 @@ msgstr ""
 "Die Beratung konnte nicht abgeschlossen werden, der Termin ist für die "
 "Zukunft geplant."
 
-#: consultations/views.py:331
-msgid "Unable to close consultation with upcoming reminders"
-msgstr "Die Beratung kann nicht abgeschlossen werden, solange Erinnerungen ausstehen"
-
 #: consultations/views.py:386 consultations/views.py:433
 #: consultations/views.py:656 consultations/views.py:802
 #: consultations/views.py:860 consultations/views.py:937 users/views.py:653
@@ -1068,12 +1048,16 @@ msgstr ""
 "wird (0 zum Deaktivieren)"
 
 #: core/settings.py:905
+#| msgid ""
+#| "Auto-created for an online Appointment without explicit consultation; hidden"
+#| " from practitioner and patient lists, auto-closed once the appointment join "
+#| "window has elapsed."
 msgid ""
-"Minutes after the appointment join window closes before a temporary "
-"appointment-chat consultation is automatically closed (0 to disable)"
+"Automatically close temporary appointment-chat consultations once the "
+"appointment join window has elapsed"
 msgstr ""
-"Minuten nach Schließen des Termin-Beitrittsfensters, bevor eine temporäre "
-"Termin-Chat-Beratung automatisch geschlossen wird (0 zum Deaktivieren)"
+"Temporäre Termin-Chat-Beratungen automatisch schließen, sobald das "
+"Beitrittsfenster des Termins abgelaufen ist"
 
 #: core/settings.py:910
 msgid "Automatically delete temporary users with no future appointments"
@@ -2421,16 +2405,32 @@ msgid "New message in consultation"
 msgstr "Neue Botschaft in der Beratung"
 
 #: messaging/template.py:104
-msgid "New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\". Open the consultation to read it."
-msgstr "Neue Nachricht von {{ obj.created_by.name }} in der Beratung \"{{ obj.consultation.title }}\". Öffnen Sie die Beratung, um sie zu lesen."
+msgid "New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\": {{ obj.content }}"
+msgstr "Neue Nachricht von {{ obj.created_by.name }} in der Beratung \"{{ obj.consultation.title }}\": {{ obj.content }}"
 
 #: messaging/template.py:109
-msgid "<p>New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\".</p><p>Open the consultation to read it.</p>"
-msgstr "<p>Neue Nachricht von {{ obj.created_by.name }} in der Beratung \"{{ obj.consultation.title }}\".</p><p>Öffnen Sie die Beratung, um sie zu lesen.</p>"
+msgid "<p>New message from {{ obj.created_by.name }} in consultation \"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
+msgstr "<p>Neue Nachricht von {{ obj.created_by.name }} in der Beratung \"{{ obj.consultation.title }}\":</p><p>{{ obj.content }}</p>"
 
 #: messaging/template.py:116
 msgid "Click here to answer"
 msgstr "Klicken Sie hier, um zu antworten."
+
+#: messaging/template.py:119
+msgid "Verify your email address"
+msgstr "Bestätigen Sie Ihre E-Mail-Adresse"
+
+#: messaging/template.py:120
+msgid "We are requiring to verify your email address."
+msgstr "Wir benötigen Ihre E-Mail-Adresse zur Bestätigung."
+
+#: messaging/template.py:122
+msgid "<p>We are requiring to verify your email address.</p>"
+msgstr "<p>Wir müssen Ihre E-Mail-Adresse bestätigen.</p>"
+
+#: messaging/template.py:127
+msgid "Verify my email"
+msgstr "Meine E-Mail-Adresse bestätigen"
 
 #: messaging/template.py:130 messaging/template.py:140
 msgid "Reset your password"
@@ -2811,6 +2811,10 @@ msgstr "Die Konsultation ist bereits abgeschlossen."
 msgid "%(user_name)s left the meeting #%(consultation_id)s"
 msgstr "%(user_name)s hat das Meeting verlassen #%(consultation_id)s"
 
+#: users/views.py:1722
+msgid "A verification email has been sent to your email address."
+msgstr "Eine Bestätigungs-E-Mail wurde an Ihre E-Mail-Adresse gesendet."
+
 #: users/views.py:2062
 msgid ""
 "Access URL is only available for patients without any automatic channel "
@@ -2818,47 +2822,3 @@ msgid ""
 msgstr ""
 "Die Zugangs-URL ist nur für Patienten ohne automatischen Kanal "
 "(E-Mail/SMS/WhatsApp) oder mit manueller Kommunikation verfügbar"
-
-#: messaging/template.py:126
-msgid "To finish creating your account, please use this verification code: {{ obj.verification_code }}"
-msgstr "Um die Erstellung Ihres Kontos abzuschließen, verwenden Sie bitte diesen Bestätigungscode: {{ obj.verification_code }}"
-
-#: messaging/template.py:130
-msgid "<p>To finish creating your account, please use this verification code: <strong>{{ obj.verification_code }}</strong></p>"
-msgstr "<p>Um die Erstellung Ihres Kontos abzuschließen, verwenden Sie bitte diesen Bestätigungscode: <strong>{{ obj.verification_code }}</strong></p>"
-
-#: users/views.py:1801
-msgid "Invalid or expired verification code."
-msgstr "Ungültiger oder abgelaufener Bestätigungscode."
-
-#: messaging/template.py:122
-msgid "{% if obj.email %}Verify your email address{% else %}Verify your phone number{% endif %}"
-msgstr "{% if obj.email %}Bestätigen Sie Ihre E-Mail-Adresse{% else %}Bestätigen Sie Ihre Telefonnummer{% endif %}"
-
-#: users/views.py:1786
-msgid "Registration is currently disabled."
-msgstr "Die Registrierung ist derzeit deaktiviert."
-
-#: users/views.py:1801
-msgid "A verification code has been sent to you."
-msgstr "Ein Bestätigungscode wurde an Sie gesendet."
-
-#: users/views.py:1912
-msgid "Account verified successfully."
-msgstr "Konto erfolgreich bestätigt."
-
-#: users/views.py:1943
-msgid "If this account needs verification, a code has been sent."
-msgstr "Falls dieses Konto bestätigt werden muss, wurde ein Code gesendet."
-
-#: users/serializers.py:345
-msgid "This instance cannot send text messages. Use an email address."
-msgstr "Diese Instanz kann keine SMS senden. Verwenden Sie eine E-Mail-Adresse."
-
-#: users/identifier.py:34
-msgid "Enter your email address or phone number."
-msgstr "Geben Sie Ihre E-Mail-Adresse oder Telefonnummer ein."
-
-#: users/identifier.py:45
-msgid "Enter a valid email address."
-msgstr "Geben Sie eine gültige E-Mail-Adresse ein."

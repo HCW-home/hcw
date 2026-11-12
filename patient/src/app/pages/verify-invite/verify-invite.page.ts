@@ -20,7 +20,6 @@ import { ActionHandlerService } from '../../core/services/action-handler.service
 import { TranslationService } from '../../core/services/translation.service';
 import { LanguageSelectorComponent } from '../../shared/components/language-selector/language-selector.component';
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
-import { ResendCountdown, retryAfterSeconds } from '../../shared/tools/resend-countdown';
 
 @Component({
   selector: 'app-verify-invite',
@@ -51,8 +50,6 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   requiresVerification = false;
   errorMessage: string | null = null;
   isResending = false;
-  // Started as soon as the code is asked for, opening the link included.
-  resendCountdown = new ResendCountdown();
 
   verificationForm: FormGroup;
 
@@ -91,12 +88,6 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.resendCountdown.stop();
-  }
-
-  private showCodeForm(): void {
-    this.requiresVerification = true;
-    this.resendCountdown.start();
   }
 
   private authenticateWithToken(): void {
@@ -111,7 +102,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
           if (response.access && response.refresh) {
             this.onAuthenticationSuccess();
           } else if (response.requires_verification) {
-            this.showCodeForm();
+            this.requiresVerification = true;
           } else if (response.error) {
             this.errorMessage = response.error;
           }
@@ -119,7 +110,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         error: async (error) => {
           this.isLoading = false;
           if (error.status === 202) {
-            this.showCodeForm();
+            this.requiresVerification = true;
           } else if (error.status === 401) {
             // Prefer the friendlier "link expired" wording; the backend
             // returns 401 with "Token expired" for stale magic links.
@@ -161,15 +152,11 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
         },
         error: async (error) => {
           this.isLoading = false;
-          // The backend answers in English only; its `code` field tells an
-          // expired code apart from a wrong one.
-          // The form stays up so that a new code is one tap away.
           if (error.status === 429) {
-            this.errorMessage = this.t.instant('verifyInvite.tooManyAttempts');
-          } else if (error.error?.code === 'verification_code_expired') {
-            this.errorMessage = this.t.instant('verifyInvite.codeExpired');
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.tooManyAttempts');
+            this.requiresVerification = false;
           } else if (error.status === 401) {
-            this.errorMessage = this.t.instant('verifyInvite.invalidVerificationCode');
+            this.errorMessage = error.error?.error || this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
             this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
@@ -190,7 +177,7 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
   }
 
   resendVerificationCode(): void {
-    if (!this.authToken || this.isResending || this.resendCountdown.running) {
+    if (!this.authToken || this.isResending) {
       return;
     }
 
@@ -205,33 +192,36 @@ export class VerifyInvitePage implements OnInit, OnDestroy {
           if (response.access && response.refresh) {
             this.onAuthenticationSuccess();
           } else {
-            this.resendCountdown.start();
-            await this.toast('verifyInvite.codeSent', 'success');
+            const toast = await this.toastCtrl.create({
+              message: this.t.instant('verifyInvite.codeSent'),
+              duration: 2000,
+              position: 'top',
+              color: 'success'
+            });
+            await toast.present();
           }
         },
         error: async (error) => {
           this.isResending = false;
           if (error.status === 202) {
-            this.resendCountdown.start();
-            await this.toast('verifyInvite.codeSent', 'success');
-          } else if (error.status === 429) {
-            this.resendCountdown.start(retryAfterSeconds(error));
-            await this.toast('verifyInvite.tooManyRequests', 'danger');
+            const toast = await this.toastCtrl.create({
+              message: this.t.instant('verifyInvite.codeSent'),
+              duration: 2000,
+              position: 'top',
+              color: 'success'
+            });
+            await toast.present();
           } else {
-            await this.toast('verifyInvite.resendFailed', 'danger');
+            const toast = await this.toastCtrl.create({
+              message: this.t.instant('verifyInvite.resendFailed'),
+              duration: 2000,
+              position: 'top',
+              color: 'danger'
+            });
+            await toast.present();
           }
         }
       });
-  }
-
-  private async toast(key: string, color: 'success' | 'danger'): Promise<void> {
-    const toast = await this.toastCtrl.create({
-      message: this.t.instant(key),
-      duration: 2000,
-      position: 'top',
-      color
-    });
-    await toast.present();
   }
 
   goToLogin(): void {

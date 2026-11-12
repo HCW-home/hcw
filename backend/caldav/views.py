@@ -1,3 +1,4 @@
+import base64
 import uuid
 from datetime import timedelta
 from xml.etree import ElementTree as ET
@@ -11,9 +12,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from consultations.models import Appointment, AppointmentStatus, Participant
-from core.throttling import ratelimit
-from dav.auth import require_auth
-from users.models import User
+from users.models import User, DAVAppPassword
 
 DAV = "DAV:"
 CALDAV = "urn:ietf:params:xml:ns:caldav"
@@ -32,21 +31,14 @@ def _fmt(dt):
     return dt.astimezone(ZoneInfo("UTC")).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _appointment_to_vcalendar(appointment, allowed_consultation_ids=frozenset()):
+def _appointment_to_vcalendar(appointment):
     end_at = appointment.end_expected_at or (
         appointment.scheduled_at + timedelta(hours=1)
     )
     domain = getattr(settings, "SITE_DOMAIN", "hcw.local")
 
-    # Being on the roster puts the appointment in the subscriber's calendar,
-    # but the follow-up behind it is only described to someone the consultation
-    # itself would let in — see `consultation_access_q`. A guest invited to a
-    # single call gets the event, not the medical context.
     description = ""
-    if (
-        appointment.consultation
-        and appointment.consultation_id in allowed_consultation_ids
-    ):
+    if appointment.consultation:
         if appointment.consultation.title:
             description += f"Consultation: {appointment.consultation.title}"
         if appointment.consultation.description:
@@ -159,9 +151,35 @@ def _parse_ics_datetime(value):
         return None
 
 
+def _get_user_from_request(request):
+    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
+    from django.contrib.auth import authenticate
+
+    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+    if not auth_header.startswith("Basic "):
+        return None
+    try:
+        decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
+        username, _, password = decoded.partition(":")
+        if not password:
+            return None
+    except Exception:
+        return None
+    
+    user = authenticate(request, username=username, password=password)
+    if user:
+        return user
+    return DAVAppPassword.authenticate(username, password)
+
+
 def _require_auth(request):
     """Return user or an HTTP 401 response."""
-    return require_auth(request, realm="HCW CalDAV")
+    user = _get_user_from_request(request)
+    if user is None:
+        response = HttpResponse("Unauthorized", status=401)
+        response["WWW-Authenticate"] = 'Basic realm="HCW CalDAV"'
+        return None, response
+    return user, None
 
 
 def _get_user_appointments(user):
@@ -180,25 +198,6 @@ def _get_user_appointments(user):
     )
 
 
-def _accessible_consultation_ids(user, appointments):
-    """Which of ``appointments``' consultations ``user`` may actually read.
-
-    Resolved once per response instead of per event: the calendar scope is the
-    appointment roster, which is wider than the consultation access rule.
-    """
-    from consultations.models import Consultation
-    from consultations.utils import consultation_access_q
-
-    ids = {a.consultation_id for a in appointments if a.consultation_id}
-    if not ids:
-        return frozenset()
-    return frozenset(
-        Consultation.objects.filter(pk__in=ids)
-        .filter(consultation_access_q(user))
-        .values_list("pk", flat=True)
-    )
-
-
 def _appointment_etag(appointment):
     # Use updated_at so any change (title rename, status, participants, ...)
     # invalidates the etag and triggers a re-fetch by CalDAV clients.
@@ -211,14 +210,6 @@ def _href_for_appointment(appointment):
     return f"/dav/calendar/appointment-{appointment.pk}@{domain}.ics"
 
 
-# All methods are throttled, not only the ones that read credentials: Basic Auth
-# replays the app password on every request, so any unthrottled method is a
-# guessing oracle. The cap is per IP and per method, sized for a real client's
-# first sync (PROPFIND, multiget REPORT, then one GET per resource).
-@method_decorator(
-    ratelimit(rate="60/min", scope="caldav"),
-    name="dispatch",
-)
 @method_decorator(csrf_exempt, name="dispatch")
 class CalDAVCalendarView(View):
     """Handle calendar collection: PROPFIND, REPORT, GET, PUT, DELETE."""
@@ -316,8 +307,7 @@ class CalDAVCalendarView(View):
         if err:
             return err
 
-        appointments = list(_get_user_appointments(user))
-        allowed_consultation_ids = _accessible_consultation_ids(user, appointments)
+        appointments = _get_user_appointments(user)
 
         # Parse request body for calendar-multiget
         requested_hrefs = set()
@@ -345,7 +335,7 @@ class CalDAVCalendarView(View):
 
             ET.SubElement(prop, _tag(DAV, "getetag")).text = _appointment_etag(appt)
             caldata = ET.SubElement(prop, _tag(CALDAV, "calendar-data"))
-            caldata.text = _appointment_to_vcalendar(appt, allowed_consultation_ids)
+            caldata.text = _appointment_to_vcalendar(appt)
 
             ET.SubElement(propstat, _tag(DAV, "status")).text = "HTTP/1.1 200 OK"
 
@@ -359,8 +349,7 @@ class CalDAVCalendarView(View):
         filename = kwargs.get("filename")
         if not filename:
             # Return full calendar as ICS
-            appointments = list(_get_user_appointments(user))
-            allowed_consultation_ids = _accessible_consultation_ids(user, appointments)
+            appointments = _get_user_appointments(user)
             lines = [
                 "BEGIN:VCALENDAR",
                 "VERSION:2.0",
@@ -368,7 +357,7 @@ class CalDAVCalendarView(View):
                 "CALSCALE:GREGORIAN",
             ]
             for appt in appointments:
-                vcal = _appointment_to_vcalendar(appt, allowed_consultation_ids)
+                vcal = _appointment_to_vcalendar(appt)
                 # Extract VEVENT from each VCALENDAR
                 in_vevent = False
                 for line in vcal.split("\r\n"):
@@ -387,9 +376,7 @@ class CalDAVCalendarView(View):
         if not appointment:
             return HttpResponse(status=404)
 
-        ics = _appointment_to_vcalendar(
-            appointment, _accessible_consultation_ids(user, [appointment])
-        )
+        ics = _appointment_to_vcalendar(appointment)
         response = HttpResponse(ics, content_type="text/calendar; charset=utf-8")
         response["ETag"] = _appointment_etag(appointment)
         return response

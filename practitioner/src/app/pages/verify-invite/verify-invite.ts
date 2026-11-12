@@ -5,7 +5,6 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -21,7 +20,6 @@ import { Loader } from '../../shared/components/loader/loader';
 import { ErrorMessage } from '../../shared/components/error-message/error-message';
 import { TypographyTypeEnum } from '../../shared/constants/typography';
 import { ButtonTypeEnum, ButtonStyleEnum } from '../../shared/constants/button';
-import { ResendCountdown, retryAfterSeconds } from '../../shared/tools/resend-countdown';
 
 @Component({
   selector: 'app-verify-invite',
@@ -45,14 +43,11 @@ export class VerifyInvite implements OnInit, OnDestroy {
   authToken: string | null = null;
   action: string | null = null;
   actionId: string | null = null;
-  actionModel: string | null = null;
   isLoading = true;
   requiresVerification = false;
   errorMessage: string | null = null;
   isResending = false;
   loadingButton = false;
-  // Started as soon as the code is asked for, opening the link included.
-  readonly resendCountdown: ResendCountdown = new ResendCountdown();
 
   verificationForm: FormGroup;
 
@@ -81,7 +76,6 @@ export class VerifyInvite implements OnInit, OnDestroy {
     this.authToken = this.route.snapshot.queryParamMap.get('auth');
     this.action = this.route.snapshot.queryParamMap.get('action');
     this.actionId = this.route.snapshot.queryParamMap.get('id');
-    this.actionModel = this.route.snapshot.queryParamMap.get('model');
 
     if (this.authToken) {
       this.authenticateWithToken();
@@ -94,12 +88,6 @@ export class VerifyInvite implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.resendCountdown.stop();
-  }
-
-  private showCodeForm(): void {
-    this.requiresVerification = true;
-    this.resendCountdown.start();
   }
 
   private authenticateWithToken(): void {
@@ -117,15 +105,15 @@ export class VerifyInvite implements OnInit, OnDestroy {
             this.authService.setRefreshToken(response.refresh);
             this.onAuthenticationSuccess();
           } else if (response.requires_verification) {
-            this.showCodeForm();
+            this.requiresVerification = true;
           } else if (response.error) {
             this.errorMessage = response.error;
           }
         },
-        error: (error: HttpErrorResponse) => {
+        error: error => {
           this.isLoading = false;
           if (error.status === 202) {
-            this.showCodeForm();
+            this.requiresVerification = true;
           } else if (error.status === 401) {
             this.errorMessage =
               error.error?.error ||
@@ -165,16 +153,12 @@ export class VerifyInvite implements OnInit, OnDestroy {
             this.errorMessage = response.error;
           }
         },
-        error: (error: HttpErrorResponse) => {
+        error: error => {
           this.loadingButton = false;
-          // The backend answers in English only; its `code` field tells an
-          // expired code apart from a wrong one.
-          if (error.status === 429) {
-            this.errorMessage = this.t.instant('verifyInvite.tooManyRequests');
-          } else if (error.error?.code === 'verification_code_expired') {
-            this.errorMessage = this.t.instant('verifyInvite.codeExpired');
-          } else if (error.status === 401) {
-            this.errorMessage = this.t.instant('verifyInvite.invalidVerificationCode');
+          if (error.status === 401) {
+            this.errorMessage =
+              error.error?.error ||
+              this.t.instant('verifyInvite.invalidVerificationCode');
           } else {
             this.errorMessage = this.t.instant('verifyInvite.genericError');
           }
@@ -188,11 +172,15 @@ export class VerifyInvite implements OnInit, OnDestroy {
       this.t.instant('verifyInvite.authTitle'),
       this.t.instant('verifyInvite.authSuccess')
     );
-    this.actionHandler.handleAction(this.action, this.actionId, this.actionModel);
+    const route = this.actionHandler.getRouteForAction(
+      this.action,
+      this.actionId
+    );
+    this.router.navigateByUrl(route);
   }
 
   resendVerificationCode(): void {
-    if (!this.authToken || this.isResending || this.resendCountdown.running) {
+    if (!this.authToken || this.isResending) {
       return;
     }
 
@@ -210,7 +198,6 @@ export class VerifyInvite implements OnInit, OnDestroy {
             this.authService.setRefreshToken(response.refresh);
             this.onAuthenticationSuccess();
           } else {
-            this.resendCountdown.start();
             this.toasterService.show(
               'success',
               this.t.instant('verifyInvite.codeSentTitle'),
@@ -218,21 +205,13 @@ export class VerifyInvite implements OnInit, OnDestroy {
             );
           }
         },
-        error: (error: HttpErrorResponse) => {
+        error: error => {
           this.isResending = false;
           if (error.status === 202) {
-            this.resendCountdown.start();
             this.toasterService.show(
               'success',
               this.t.instant('verifyInvite.codeSentTitle'),
               this.t.instant('verifyInvite.codeSentSuccess')
-            );
-          } else if (error.status === 429) {
-            this.resendCountdown.start(retryAfterSeconds(error));
-            this.toasterService.show(
-              'error',
-              this.t.instant('verifyInvite.resendFailedTitle'),
-              this.t.instant('verifyInvite.tooManyRequests')
             );
           } else {
             this.toasterService.show(

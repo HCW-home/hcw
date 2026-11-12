@@ -68,8 +68,11 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-  /** An email address or a phone number; the backend tells them apart. */
-  identifier: string;
+  email: string;
+  password1: string;
+  password2: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export interface MagicLinkRequest {

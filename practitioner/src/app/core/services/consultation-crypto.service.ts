@@ -109,9 +109,6 @@ export class ConsultationCryptoService {
     for (const participant of participants) {
       const userId = participant.user?.id;
       const pubkey = participant.user?.public_key;
-      // Same rule as the server's roster access: the visibility flag alone
-      // opens the chat, practitioner or not. Wrapping a key for someone the
-      // server keeps out would hand them the conversation anyway.
       if (
         !userId
         || !pubkey

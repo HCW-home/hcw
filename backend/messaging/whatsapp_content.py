@@ -54,50 +54,19 @@ _ADJACENT_PLACEHOLDERS_RE = re.compile(r"\{\{\d+\}\}\s*\{\{\d+\}\}")
 
 
 def get_localized(template: "Template", field: str, language_code: str) -> str:
-    """Return a template field in a given language.
+    """Return a translated template field, falling back to the default column.
 
-    Always resolved under the requested language rather than under whichever
-    language happens to be active on the thread, so that the same template
-    yields the same text from a Celery worker and from an admin request.
-
-    Built-in templates are read straight from the defaults: `Template` builds
-    them in memory, and modeltranslation then only fills the column of the
-    language that was active at construction time, leaving every other language
-    empty.
+    The fallback is a lazy translation for templates that have no database
+    override, so it is resolved under the requested language rather than under
+    whichever language happens to be active on the current thread. Without
+    this, the very same template would hash differently from a Celery worker
+    and from an admin request.
     """
     from django.utils import translation
 
-    from .template import DEFAULT_NOTIFICATION_MESSAGES
-
     with translation.override(language_code):
-        if template.pk is None:
-            default = DEFAULT_NOTIFICATION_MESSAGES.get(template.event_type, {})
-            return str(default.get(field) or "")
-
         localized = getattr(template, f"{field}_{language_code}", None)
         return str(localized or getattr(template, field) or "")
-
-
-def get_action_label(template: "Template", language_code: str) -> str:
-    """Resolve the call-to-action label in a given language.
-
-    Unlike the bodies, ``action_label`` is not a modeltranslation field: the
-    built-in templates store a lazy translation, which resolves under whichever
-    language happens to be active on the thread. Pinning it to the validation's
-    own language keeps both the approved button text and the content hash
-    stable, wherever they are computed from.
-
-    A template whose action is switched off has no button, hence no label: the
-    empty string is what stops the renderers from emitting one, and what makes
-    an already approved WhatsApp validation show up as outdated.
-    """
-    from django.utils import translation
-
-    if not template.action:
-        return ""
-
-    with translation.override(language_code):
-        return str(template.action_label or "")
 
 
 def split_fragments(source: str) -> List[Tuple[bool, str]]:

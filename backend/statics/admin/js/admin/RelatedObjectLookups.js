@@ -79,7 +79,9 @@
     //   ".view-related, .change-related, .delete-related"
     // );
 
-    const siblings = $("body").find('#' + $this.closest(".related-widget-wrapper").data("id")).find(".view-related, .change-related, .delete-related");
+    const siblings = $this
+      .closest(".related-widget-wrapper")
+      .find(".view-related, .change-related, .delete-related");
 
     if (!siblings.length) {
       return;

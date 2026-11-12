@@ -3,7 +3,7 @@ channels
 channels-redis
 daphne
 dj-rest-auth
-Django>=6.0.8,<6.1
+Django
 django-allauth
 django-allauth[socialaccount]
 django-appconf
@@ -15,6 +15,7 @@ django-import-export
 django-location-field
 # django-mfa2
 django-modeltranslation
+django-rest-swagger
 django-timezone-field
 django-tinymce
 django-unfold
@@ -27,7 +28,6 @@ websockets
 python-dotenv
 psycopg
 itsdangerous
-Jinja2
 Pillow
 phonenumbers
 factory-boy
@@ -44,4 +44,3 @@ tenant-schemas-celery
 drf-spectacular-sidecar
 honcho
 watchfiles
-pyarrow

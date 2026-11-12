@@ -98,18 +98,6 @@ export type AppointmentStatus =
   | 'cancelled';
 export type AppointmentType = 'online' | 'inPerson';
 
-/**
- * Statuses whose call room stays reachable, mirroring the backend rule behind
- * `can_join`. Qualifying an appointment as completed or no-show is bookkeeping,
- * not a lock: the call must remain rejoinable. Only a cancelled appointment and
- * a draft one — never sent to its participants — have no room to enter.
- */
-export function isJoinableAppointmentStatus(
-  status: AppointmentStatus | string | null | undefined,
-): boolean {
-  return status === 'scheduled' || status === 'completed' || status === 'noshow';
-}
-
 export interface Appointment {
   id: number;
   consultation: number;
@@ -124,8 +112,6 @@ export interface Appointment {
   created_by: User;
   created_at: string;
   participants?: Participant[];
-  // Server-side answer to "may the current user join this call?"
-  can_join?: boolean;
 }
 
 export interface Participant {

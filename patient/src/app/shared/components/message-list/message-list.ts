@@ -11,9 +11,7 @@ import {
   SimpleChanges,
   AfterViewChecked,
   OnInit,
-  effect,
-  inject,
-  HostListener
+  inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +23,6 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConsultationService } from '../../../core/services/consultation.service';
-import { KeyboardService } from '../../../core/services/keyboard.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
 export interface MessageAttachment {
@@ -83,7 +80,6 @@ export interface DeleteMessageData {
 })
 export class MessageListComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   private t = inject(TranslationService);
-  private keyboard = inject(KeyboardService);
 
   @Input() messages: Message[] = [];
   @Input() headerTitle = '';
@@ -112,22 +108,12 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   private previousMessagesLength = 0;
 
   viewingImage = signal<{ url: string; fileName: string } | null>(null);
-  /* Element that opened the viewer, so focus can be handed back on close. */
-  private imageViewerTrigger: HTMLElement | null = null;
   imageUrls = signal<Map<number, string>>(new Map());
 
   newMessage = '';
   selectedFile: File | null = null;
 
-  constructor(private consultationService: ConsultationService) {
-    // Opening the keyboard shortens the list without moving its scroll
-    // position, which leaves the reader on older messages while they type.
-    // Re-pin to the newest one once the new height has been laid out.
-    effect(() => {
-      this.keyboard.height();
-      setTimeout(() => this.scrollToBottom(), 50);
-    });
-  }
+  constructor(private consultationService: ConsultationService) {}
 
   ngOnInit(): void {
     this.isInitialLoad = true;
@@ -365,8 +351,6 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
   }
 
   openImageViewer(message: Message): void {
-    const active = document.activeElement;
-    this.imageViewerTrigger = active instanceof HTMLElement ? active : null;
     const url = this.getImageUrl(message.id);
     if (message.attachment && this.isImageAttachment(message.attachment) && url) {
       this.viewingImage.set({
@@ -376,19 +360,8 @@ export class MessageListComponent implements OnInit, OnChanges, OnDestroy, After
     }
   }
 
-  /* The viewer is a plain overlay div, not an ion-modal, so nothing closes it
-   * on Escape and nothing hands focus back. Both are done here. */
-  @HostListener('document:keydown.escape')
-  onEscapeKey(): void {
-    if (this.viewingImage()) {
-      this.closeImageViewer();
-    }
-  }
-
   closeImageViewer(): void {
     this.viewingImage.set(null);
-    this.imageViewerTrigger?.focus();
-    this.imageViewerTrigger = null;
   }
 
   canEditMessage(message: Message): boolean {

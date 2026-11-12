@@ -12,15 +12,10 @@ Practitioners define their availability so that appointments can be booked on op
 
 **Features used:** availability management, booking slots, calendar integration.
 
-Bookable slots are managed from the **Calendar** menu: they are listed in the
-list view, below the appointments and the reminders.
-
-![Bookable slots](../assets/images/practitioner-availability-list.png)
+![Availability list](../assets/images/practitioner-availability-list.png)
 
 ## Opening a Time Slot
 
-The practitioner opens a slot from the arrow next to **+ New Appointment**, then
-**New bookable slot**: start and end time, an optional break, the working days
-it applies to, and an optional expiry date.
+The practitioner can open specific time slots for booking, defining the duration and type of appointment accepted.
 
 ![Open time slot](../assets/images/practitioner-open-timeslot.png)

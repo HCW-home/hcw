@@ -21,7 +21,6 @@ import { SpecialityService } from '../../core/services/speciality.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { ConsultationService, ConsultationRequestData } from '../../core/services/consultation.service';
 import { AuthService } from '../../core/services/auth.service';
-import { AuthFormComponent, AuthFormMode } from '../../shared/components/auth-form/auth-form.component';
 import { PractitionerSearchService } from '../../core/services/practitioner-search.service';
 import { Speciality, Doctor } from '../../core/models/doctor.model';
 import { Reason, Slot, CustomField } from '../../core/models/consultation.model';
@@ -62,7 +61,6 @@ interface BookingDraft {
     SearchBarComponent,
     SearchMapComponent,
     SearchResultCardComponent,
-    AuthFormComponent,
     TranslatePipe
   ]
 })
@@ -71,8 +69,6 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private t = inject(TranslationService);
 
   currentStep = signal(1);
-  // Which form the sign-in step shows, if the user picked one yet.
-  authMode = signal<AuthFormMode | null>(null);
   totalSteps = 6;
   isLoading = signal(false);
   isSubmitting = signal(false);
@@ -108,9 +104,6 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   private pendingSlot: Slot | null = null;
   private visitedDoctorStep = false;
   private initializedOnce = false;
-  // Opened straight on a practitioner (from their sheet): the search step was
-  // never shown, so it must not be revealed on the way back.
-  private enteredOnDoctor = false;
 
   stepTitle = computed(() => {
     switch (this.currentStep()) {
@@ -182,7 +175,6 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     const specialityId = Number(this.readParam(params, 'speciality_id'));
 
     if (doctorId && specialityId) {
-      this.enteredOnDoctor = true;
       this.startBooking(doctorId, specialityId, this.slotFromParams(params, doctorId));
       return;
     }
@@ -476,48 +468,27 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
   proceedToRecapOrAuth(): void {
     this.loadCustomFields();
     if (!this.authService.isAuthenticatedValue) {
-      this.showAuthStep();
+      this.currentStep.set(5);
+      this.authService.getConfig().subscribe({
+        next: (config: any) => {
+          if (!config) return;
+          this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
+        },
+      });
       return;
     }
     this.currentStep.set(6);
   }
 
-  /** Ask for a sign in, inside the wizard, on a fresh choice of form. */
-  private showAuthStep(): void {
-    this.authMode.set(null);
-    this.currentStep.set(5);
-    this.authService.getConfig().subscribe({
-      next: (config: any) => {
-        if (!config) return;
-        this.registrationEnabled.set(!!config.registration_enabled && !config.force_temporary_patients);
-      },
-    });
+  goToLogin(): void {
+    this.saveDraftAndRedirect('/login');
   }
 
-  setAuthMode(mode: AuthFormMode): void {
-    this.authMode.set(mode);
+  goToRegister(): void {
+    this.saveDraftAndRedirect('/register');
   }
 
-  clearAuthMode(): void {
-    this.authMode.set(null);
-  }
-
-  // Signed in without ever leaving the wizard: straight on to the recap.
-  onAuthenticated(): void {
-    this.authMode.set(null);
-    this.currentStep.set(6);
-  }
-
-  // Resetting a password does need another page, so the request is stashed and
-  // replayed when the user comes back signed in.
-  goToForgotPassword(identifier: string): void {
-    this.saveDraft();
-    this.router.navigate(['/forgot-password'], {
-      queryParams: { email: identifier, action: 'completeBooking' },
-    });
-  }
-
-  private saveDraft(): void {
+  private saveDraftAndRedirect(path: string): void {
     const draft: BookingDraft = {
       speciality: this.selectedSpeciality(),
       doctor: this.selectedDoctor(),
@@ -530,6 +501,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
     } catch {
     }
+    this.router.navigate([path], { queryParams: { action: 'completeBooking' } });
   }
 
   private tryRestoreDraft(): boolean {
@@ -577,13 +549,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
         }
         break;
       case 2:
-        // Nothing to go back to inside the wizard when it started here: leave
-        // it and land back on the page that opened it.
-        if (this.enteredOnDoctor) {
-          this.leaveToDoctor();
-        } else {
-          this.currentStep.set(1);
-        }
+        this.currentStep.set(1);
         break;
       case 3:
         this.currentStep.set(2);
@@ -591,13 +557,8 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
       case 4:
         this.currentStep.set(this.visitedDoctorStep ? 3 : 2);
         break;
-      case 5:
-        // Inside a form: step back to the choice between signing in and up.
-        if (this.authMode()) {
-          this.clearAuthMode();
-        } else {
-          this.currentStep.set(4);
-        }
+      case 5: 
+        this.currentStep.set(4);
         break;
       case 6: {
         const reason = this.selectedReason();
@@ -611,25 +572,8 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  /**
-   * Back out of a wizard that was opened straight on a practitioner: pop the
-   * history when there is one, otherwise go to that practitioner's sheet, which
-   * is where the wizard would have been opened from.
-   */
-  private leaveToDoctor(): void {
-    if (window.history.length > 1) {
-      this.navCtrl.back();
-      return;
-    }
-
-    const pk = this.selectedDoctor()?.pk;
-    this.navCtrl.navigateBack(pk ? ['/practitioners', pk, 'public'] : '/map');
-  }
-
   async confirmCancel(): Promise<void> {
     const alert = await this.alertCtrl.create({
-      // Confirmation dialogs must be answered, not dismissed by a stray click.
-      backdropDismiss: false,
       header: this.t.instant('newRequest.cancelConfirmTitle'),
       message: this.t.instant('newRequest.cancelConfirmMessage'),
       buttons: [
@@ -665,10 +609,7 @@ export class NewRequestPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (!this.authService.isAuthenticatedValue) {
-      // The session lapsed between the sign-in step and the submission: ask
-      // again here, the request is kept as it stands.
-      this.saveDraft();
-      this.showAuthStep();
+      this.saveDraftAndRedirect("/login");
       return;
     }
 

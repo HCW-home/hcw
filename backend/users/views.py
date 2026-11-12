@@ -5,6 +5,9 @@ logger = logging.getLogger(__name__)
 import os
 import random
 import uuid
+import secrets
+
+import uuid
 
 from django.utils.translation import gettext as _
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -13,10 +16,8 @@ from allauth.socialaccount.providers.openid_connect.views import (
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from core.blobcrypto import BlobDecryptionError
 from core.channel_groups import user_group
 from consultations.models import (
-    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     Consultation,
     Participant,
@@ -45,7 +46,6 @@ from dj_rest_auth.views import PasswordResetConfirmView as DjRestAuthPasswordRes
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
@@ -61,25 +61,19 @@ from drf_spectacular.utils import (
 from itsdangerous import URLSafeTimedSerializer
 from mediaserver.exceptions import NoMediaServerAvailable
 from mediaserver.models import Server
-from messaging.models import CommunicationMethod, Message
+from messaging.models import Message
 from messaging.serializers import MessageSerializer
-from rest_framework import filters, serializers, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from core.authentication import TenantRefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.throttling import (
-    EmailVerifyCodeRateThrottle,
-    EmailVerifyRateThrottle,
     LoginRateThrottle,
     OpenIDRateThrottle,
-    PasswordResetConfirmRateThrottle,
     PasswordResetRateThrottle,
-    RegistrationDailyRateThrottle,
-    RegistrationIdentifierRateThrottle,
-    RegistrationRateThrottle,
     VerificationCodeIPRateThrottle,
     VerificationCodeRateThrottle,
 )
@@ -87,21 +81,11 @@ from constance import config as constance_config
 from allauth.socialaccount.models import SocialApp
 
 from .filters import UserFilter
-from .models import HealthMetric, Language, Organisation, PatientVisibilityGrant, Speciality, Term, User, WebPushSubscription, DAVAppPassword
-from .permissions import CONTACT_FIELDS, CanManageUser, check_contact_changes
+from .models import HealthMetric, Language, Organisation, Speciality, Term, User, WebPushSubscription, DAVAppPassword
 from .phone import phone_lookup_variants
-from .identifier import EMAIL, resolve_identifier
-from .verification import (
-    MAX_VERIFICATION_ATTEMPTS,
-    VERIFICATION_CODE_TTL,
-    code_login_token,
-    codes_match,
-)
 from .serializers import (
     HealthMetricSerializer,
-    RegisterSerializer,
     LanguageSerializer,
-    ManagedUserSerializer,
     OrganisationSerializer,
     SpecialitySerializer,
     TermSerializer,
@@ -371,11 +355,10 @@ class MapView(APIView):
         (all four required; ignored otherwise).
       - `speciality`: speciality id to restrict practitioners.
       - `has_slots`: when truthy, restrict practitioners to those with
-        at least one currently-valid booking slot, and return no
-        organisation at all — only practitioners hold slots.
+        at least one currently-valid booking slot.
       - `search`: free-text search across practitioner/org name, address
-        and main organisation. It narrows the bounding box rather than
-        replacing it, so panning the map keeps the terms in effect.
+        and main organisation. When provided the bounding box is
+        ignored, matching the previous per-endpoint behavior.
     """
 
     def get_permissions(self):
@@ -391,11 +374,7 @@ class MapView(APIView):
         has_slots_raw = request.query_params.get("has_slots") or ""
         has_slots = has_slots_raw.lower() in ("true", "1")
  
-        # Slots hang off practitioners, never off an organisation, so a search
-        # narrowed to open online booking has nothing to say about facilities.
-        organisations = (
-            [] if has_slots else self._build_organisations(bounds, search, location)
-        )
+        organisations = self._build_organisations(bounds, search, location)
         practitioners = self._build_practitioners(
             bounds, search, speciality, has_slots, location
         )
@@ -432,15 +411,17 @@ class MapView(APIView):
         qs = Organisation.objects.exclude(
             location__isnull=True
         ).exclude(location="")
-        if location:
-            qs = qs.filter(
-                Q(city__icontains=location)
-                | Q(street__icontains=location)
-                | Q(postal_code__icontains=location)
-                | Q(country__icontains=location)
-            )
-        if search:
-            qs = qs.filter(Q(name__icontains=search))
+        if search or location:
+            if location:
+                qs = qs.filter(
+                    Q(city__icontains=location)
+                    | Q(street__icontains=location)
+                    | Q(postal_code__icontains=location)
+                    | Q(country__icontains=location)
+                )
+            if search:
+                qs = qs.filter(Q(name__icontains=search))
+            return list(qs)
         if bounds is None:
             return list(qs)
         return [org for org in qs if self._location_in_bounds(org.location, bounds)]
@@ -465,54 +446,40 @@ class MapView(APIView):
                 & (Q(slots__valid_until__isnull=True) | Q(slots__valid_until__gte=today))
             ).distinct()
  
-        if location:
-            qs = qs.filter(
-                Q(street__icontains=location)
-                | Q(city__icontains=location)
-                | Q(postal_code__icontains=location)
-                | Q(country__icontains=location)
-                | Q(main_organisation__street__icontains=location)
-                | Q(main_organisation__city__icontains=location)
-                | Q(main_organisation__postal_code__icontains=location)
-                | Q(main_organisation__country__icontains=location)
-            )
-
-        if search:
-            # Name hits come first: someone typing a name wants that person
-            # before everyone sharing their speciality.
-            name_matches = list(qs.filter(
-                Q(first_name__icontains=search) | Q(last_name__icontains=search)
-            ).distinct())
-            name_match_ids = {u.pk for u in name_matches}
-            other_matches = list(qs.filter(
-                Q(specialities__name__icontains=search)
-                | Q(specialities__reasons__name__icontains=search)
-            ).exclude(pk__in=name_match_ids).distinct())
-            practitioners = name_matches + other_matches
-        else:
-            practitioners = list(qs.distinct())
-
-        return self._within_bounds(practitioners, bounds)
-
-    @classmethod
-    def _within_bounds(cls, practitioners, bounds):
-        """Keep those placed inside the box, on the same location the map
-        draws them at: their own, or their main organisation's."""
+        if search or location:
+            if location:
+                qs = qs.filter(
+                    Q(street__icontains=location)
+                    | Q(city__icontains=location)
+                    | Q(postal_code__icontains=location)
+                    | Q(country__icontains=location)
+                    | Q(main_organisation__street__icontains=location)
+                    | Q(main_organisation__city__icontains=location)
+                    | Q(main_organisation__postal_code__icontains=location)
+                    | Q(main_organisation__country__icontains=location)
+                )
+            if search:
+                name_matches = list(qs.filter(
+                    Q(first_name__icontains=search) | Q(last_name__icontains=search)
+                ).distinct())
+                name_match_ids = {u.pk for u in name_matches}
+                other_matches = list(qs.filter(
+                    Q(specialities__name__icontains=search)
+                    | Q(specialities__reasons__name__icontains=search)
+                ).exclude(pk__in=name_match_ids).distinct())
+                return name_matches + other_matches
+            return list(qs.distinct())
+ 
         if bounds is None:
-            return practitioners
-        return [
-            user
-            for user in practitioners
-            if cls._location_in_bounds(
-                user.location
-                or (
-                    user.main_organisation.location
-                    if user.main_organisation
-                    else None
-                ),
-                bounds,
+            return list(qs)
+        kept = []
+        for user in qs:
+            loc = user.location or (
+                user.main_organisation.location if user.main_organisation else None
             )
-        ]
+            if self._location_in_bounds(loc, bounds):
+                kept.append(user)
+        return kept
 
 
 class PublicPractitionerView(APIView):
@@ -561,6 +528,7 @@ class UserParticipantViewSet(viewsets.ModelViewSet):
 
 
 class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = ConsultationSerializer
@@ -570,8 +538,10 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
         A consultation stays listed until it is closed (closed_at). The patient
         reaches it either as beneficiary (visible_by_patient) or as an active,
-        consultation-visible participant of one of its appointments — the same
-        rule for the list and for detail / messages, temporary follow-up or not.
+        consultation-visible participant of one of its appointments. Detail /
+        messages access additionally allows temporary consultations the user is
+        an active participant of, so the appointment chat works even without the
+        consultation-visible flag.
         """
         from consultations.views import annotate_unread_count
 
@@ -595,6 +565,11 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             qs = Consultation.objects.filter(
                 Q(beneficiary=user, visible_by_patient=True)
+                | Q(
+                    temporary=True,
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                )
                 | Q(
                     appointments__participant__user=user,
                     appointments__participant__is_active=True,
@@ -731,6 +706,7 @@ class UserConsultationsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MessageAttachmentView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -768,11 +744,31 @@ class MessageAttachmentView(APIView):
 
         user = request.user
 
-        # Same rule as ConsultationViewSet / MessageViewSet: owner, creator,
-        # beneficiary, queue member, or someone the appointment rosters let in.
-        from consultations.utils import can_access_consultation
+        # Check if user has permission to access this consultation. Mirrors
+        # ConsultationViewSet / MessageViewSet: owner, creator, beneficiary,
+        # queue member, or an active visible participant of any of the
+        # consultation's appointments.
+        from consultations.models import Participant
 
-        if not can_access_consultation(user, message.consultation):
+        consultation = message.consultation
+
+        has_access = (
+            consultation.created_by_id == user.id
+            or consultation.owned_by_id == user.id
+            or consultation.beneficiary_id == user.id
+            or (
+                consultation.group_id
+                and consultation.group.users.filter(id=user.id).exists()
+            )
+            or Participant.objects.filter(
+                appointment__consultation=consultation,
+                user=user,
+                is_active=True,
+                is_consultation_visible=True,
+            ).exists()
+        )
+
+        if not has_access:
             return Response(
                 {"detail": "You don't have permission to access this message."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -798,9 +794,7 @@ class MessageAttachmentView(APIView):
             response = FileResponse(attachment_file, content_type=content_type)
             response["Content-Disposition"] = f'inline; filename="{file_name}"'
             return response
-        except (FileNotFoundError, BlobDecryptionError):
-            # A file that cannot be decrypted (wrong key, damaged file) is
-            # logged by the storage: a 404 beats serving binary noise.
+        except FileNotFoundError:
             return Response(
                 {"detail": "Attachment file not found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -973,6 +967,7 @@ class UserNotificationsMarkAllReadView(APIView):
 
 
 class WebPushSubscribeView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -985,6 +980,7 @@ class WebPushSubscribeView(APIView):
 
 
 class WebPushUnsubscribeView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -1006,6 +1002,7 @@ class WebPushUnsubscribeView(APIView):
 
 
 class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = UniversalPagination
     serializer_class = AppointmentSerializer
@@ -1113,17 +1110,6 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
         channel_layer = get_channel_layer()
         active_participants = appointment.participant_set.filter(is_active=True)
 
-        # The event carries the follow-up id, and the client opens its chat
-        # with it: only tell the participants the consultation lets in, or the
-        # ring answered by someone on the roster alone lands on a 404.
-        from consultations.signals import get_users_to_notification_consultation
-
-        consultation_readers = (
-            get_users_to_notification_consultation(appointment.consultation)
-            if appointment.consultation
-            else set()
-        )
-
         for participant in active_participants:
             if participant.user.pk == request.user.pk:
                 continue
@@ -1132,11 +1118,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
                 user_group(participant.user.pk),
                 {
                     "type": "appointment",
-                    "consultation_id": (
-                        appointment.consultation.pk
-                        if participant.user.pk in consultation_readers
-                        else None
-                    ),
+                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
                     "appointment_id": appointment.pk,
                     "state": "participant_joined",
                     "data": {
@@ -1212,112 +1194,7 @@ class UserAppointmentsViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({"detail": _("Left successfully")})
 
 
-class ManagedUserViewSetMixin:
-    """Common ground of the endpoints serving `User` rows to practitioners.
-
-    /api/users/, /api/patients/ and /api/practitioners/ (the last two also as
-    /api/fhir/Patient and /api/fhir/Practitioner) are three views of the same
-    table. Only the first one used to apply the visibility settings and refuse
-    to modify staff or colleagues, which turned the other two into a way
-    around both (audit C-02). Rows are filtered here, and writes are vetted by
-    CanManageUser and ManagedUserSerializer.
-    """
-
-    serializer_class = ManagedUserSerializer
-    permission_classes = [IsAuthenticated, IsPractitioner, CanManageUser]
-
-    def perform_create(self, serializer):
-        user = serializer.save(created_by=self.request.user)
-        if self.request.user.main_organisation_id:
-            user.organisations.add(self.request.user.main_organisation)
-
-    # FHIR writes bypass the serializer: the mapper copies the payload onto the
-    # instance and these hooks save it.
-
-    def perform_fhir_create(self, mapper, instance, payload, context):
-        # A create listing the identifier of an existing user updates that
-        # user instead (FHIR upsert), so it is vetted as an update.
-        if instance.pk is not None:
-            self._check_fhir_write(instance)
-        super().perform_fhir_create(mapper, instance, payload, context)
-
-    def perform_fhir_update(self, mapper, instance, payload, context):
-        self._check_fhir_write(instance)
-        super().perform_fhir_update(mapper, instance, payload, context)
-
-    def _check_fhir_write(self, instance):
-        # `instance` already carries the payload: read the stored row back to
-        # know whose account this is and what actually changes.
-        stored = User.objects.get(pk=instance.pk)
-        self.check_object_permissions(self.request, stored)
-        check_contact_changes(
-            stored, {field: getattr(instance, field) for field in CONTACT_FIELDS}
-        )
-
-    def _filter_practitioners(self, base_queryset, current_user):
-        """Filter practitioners based on USERS_VISIBILITY setting."""
-        qs = base_queryset.filter(is_practitioner=True)
-        visibility = config.users_visibility
-
-        if not visibility or visibility == "all":
-            return qs
-
-        elif visibility == "alone":
-            return qs.filter(id=current_user.id)
-
-        elif visibility == "organization":
-            org_filter = self._get_organization_filter(current_user)
-            if org_filter:
-                return qs.filter(org_filter | Q(id=current_user.id))
-            return qs.filter(id=current_user.id)
-
-        return qs
-
-    def _filter_patients(self, base_queryset, current_user):
-        """Filter patients based on PATIENT_VISIBILITY setting."""
-        qs = base_queryset.filter(is_practitioner=False)
-        visibility = config.patient_visibility
-
-        if not visibility or visibility == "all":
-            return qs
-
-        elif visibility == "alone":
-            return qs.filter(created_by=current_user)
-
-        elif visibility == "organization":
-            combined = Q(created_by=current_user)
-            combined |= Q(
-                visibility_grants__confirmed_at__isnull=False,
-                visibility_grants__organisation__isnull=True,
-                visibility_grants__requested_by=current_user,
-            )
-            org_filter = self._get_organization_filter(current_user)
-            if org_filter is not None:
-                combined |= org_filter
-                if current_user.main_organisation_id:
-                    combined |= Q(
-                        visibility_grants__confirmed_at__isnull=False,
-                        visibility_grants__organisation=current_user.main_organisation,
-                    )
-            # No .distinct() here: UserViewSet.get_queryset() ORs this with
-            # the practitioners queryset, and Django refuses to combine a
-            # distinct query with a non-distinct one. Callers dedup.
-            return qs.filter(combined)
-        return qs
-
-    def _get_organization_filter(self, current_user):
-        """Build a Q filter matching records whose organisations (main_organisation
-        or the organisations M2M) overlap with current_user's own set of
-        organisations (main_organisation and/or the organisations M2M)."""
-        user_org_ids = set(current_user.organisations.values_list("id", flat=True))
-        if current_user.main_organisation_id:
-            user_org_ids.add(current_user.main_organisation_id)
-        if not user_org_ids:
-            return None
-        return Q(organisations__id__in=user_org_ids) | Q(main_organisation__id__in=user_org_ids)
-
-
-class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for users - read only with GET endpoint
     Supports search by first name, last name, and email
@@ -1327,10 +1204,9 @@ class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
     """
 
     queryset = User.objects.all()
+    serializer_class = UserDetailsSerializer
     pagination_class = UniversalPagination
-    # No DELETE: removing the row would cascade to every consultation,
-    # appointment and message the user created (audit C-02).
-    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+    permission_classes = [IsAuthenticated, IsPractitioner]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = [
         "first_name", "last_name", "email", "mobile_phone_number",
@@ -1376,6 +1252,75 @@ class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
             return (filtered | visible.filter(phone_filter)).distinct()
         return filtered
 
+    def _filter_practitioners(self, base_queryset, current_user):
+        """Filter practitioners based on USERS_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=True)
+        visibility = config.users_visibility
+
+        if not visibility or visibility == "all":
+            return qs
+
+        elif visibility == "alone":
+            return qs.filter(id=current_user.id)
+
+        elif visibility == "organization":
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter:
+                return qs.filter(org_filter | Q(id=current_user.id))
+            return qs.filter(id=current_user.id)
+
+        return qs
+
+    def _filter_patients(self, base_queryset, current_user):
+        """Filter patients based on PATIENT_VISIBILITY setting."""
+        qs = base_queryset.filter(is_practitioner=False)
+        visibility = config.patient_visibility
+
+        if not visibility or visibility == "all":
+            return qs
+
+        elif visibility == "alone":
+            return qs.filter(created_by=current_user)
+
+        elif visibility == "organization":
+            org_filter = self._get_organization_filter(current_user)
+            if org_filter is None:
+                return qs.filter(created_by=current_user)
+            # Patients rarely have a main_organisation/organisations set,
+            # so also match via their creator's organisation (`created_by__*`).
+            user_orgs = list(current_user.organisations.values_list("id", flat=True))
+            creator_filter = Q()
+            if current_user.main_organisation_id:
+                creator_filter |= Q(
+                    created_by__main_organisation=current_user.main_organisation
+                )
+            if user_orgs:
+                creator_filter |= Q(created_by__organisations__id__in=user_orgs)
+            creator_filter |= Q(created_by=current_user)
+            return qs.filter(org_filter | creator_filter).distinct()
+
+        return qs
+
+    def _get_organization_filter(self, current_user):
+        """Build a Q filter for matching organizations."""
+        user_orgs = list(current_user.organisations.values_list("id", flat=True))
+        has_main_org = current_user.main_organisation is not None
+        has_orgs = len(user_orgs) > 0
+
+        if not has_main_org and not has_orgs:
+            return None
+
+        filters = []
+        if has_main_org:
+            filters.append(Q(main_organisation=current_user.main_organisation))
+        if has_orgs:
+            filters.append(Q(organisations__id__in=user_orgs))
+
+        combined = filters[0]
+        for f in filters[1:]:
+            combined |= f
+        return combined
+
     def create(self, request, *args, **kwargs):
         """
         Create a new user or merge with existing temporary user.
@@ -1403,8 +1348,6 @@ class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
             ).order_by("-is_active", "pk").first()
 
         if existing_user is not None:
-            # This rewrites an existing account: same checks as a PATCH on it.
-            self.check_object_permissions(request, existing_user)
             # Update the existing temporary user with new data
             serializer = self.get_serializer(existing_user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -1415,116 +1358,63 @@ class UserViewSet(ManagedUserViewSetMixin, viewsets.ModelViewSet):
 
             # Save the updated user
             serializer.save(created_by=request.user)
-            if request.user.main_organisation_id:
-                existing_user.organisations.add(request.user.main_organisation)
+
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
-        hidden_field = self._find_hidden_conflict(email, phone, request.user)
-        if hidden_field:
-            return Response(
-                {
-                    "detail": _("A contact with this information already exists but is not visible to you."),
-                    "field": hidden_field,
-                    "code": "contact_hidden",
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
-
         # Normal user creation
         return super().create(request, *args, **kwargs)
-    
-    def _find_hidden_conflict(self, email, phone, current_user):
-        candidates = User.objects.filter(is_active=True, is_practitioner=False)
-        match = None
 
-        if email:
-            match = candidates.filter(email__iexact=email.strip()).first()
-        if match is None and phone:
-            match = candidates.filter(mobile_phone_number__in=phone_lookup_variants(phone)).first()
-        if match is None:
-            return None
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
-        visible = self._filter_patients(self.queryset.filter(is_active=True), current_user)
-        if visible.filter(pk=match.pk).exists():
-            return None
+    def update(self, request, *args, **kwargs):
+        """Prevent updating users with superuser, staff access, or users in groups."""
+        user = self.get_object()
 
-        return "email" if email and match.email and match.email.lower() == email.strip().lower() else "mobile_phone_number"
-
-    @action(detail=False, methods=["post"], url_path="request-access")
-    def request_access(self, request):
-        """Request visibility on a hidden patient by exact email/phone match.
-
-        A practitioner who belongs to an organisation shares access with the
-        whole organisation; a practitioner who belongs to none gets a
-        personal grant instead, visible only to themself. Either way, when
-        `patient_visibility_requires_confirmation` is enabled, the grant
-        stays unconfirmed until the patient clicks the confirmation link
-        (see messaging template "patient_access_confirmation"). Disabled
-        (default), the grant is confirmed immediately.
-        """
-        email = request.data.get("email")
-        phone = request.data.get("mobile_phone_number")
-
-        candidates = User.objects.filter(is_active=True, is_practitioner=False)
-        match = None
-        if email:
-            match = candidates.filter(email__iexact=email.strip()).first()
-        if match is None and phone:
-            match = candidates.filter(
-                mobile_phone_number__in=phone_lookup_variants(phone)
-            ).first()
-        if match is None:
+        # Prevent updating superusers and staff users
+        if user.is_superuser or user.is_staff:
             return Response(
-                {"detail": _("No matching patient found.")},
-                status=status.HTTP_404_NOT_FOUND,
+                {"detail": "Cannot update users with portal or super admin access."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
-        organisation = request.user.main_organisation
-        if organisation is not None:
-            grant, _created = PatientVisibilityGrant.objects.get_or_create(
-                patient=match,
-                organisation=organisation,
-                defaults={"requested_by": request.user},
-            )
-        else:
-            grant, _created = PatientVisibilityGrant.objects.get_or_create(
-                patient=match,
-                organisation=None,
-                requested_by=request.user,
-            )
-
-        if grant.confirmed_at is not None:
+        # Prevent updating users who belong to any group
+        if user.groups.exists():
             return Response(
-                {"detail": _("This patient is already visible to you.")},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "Cannot update users who belong to a group."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
-        requires_confirmation = config.patient_visibility_requires_confirmation
-        if not requires_confirmation:
-            grant.confirmed_at = timezone.now()
-            grant.save(update_fields=["confirmed_at"])
-            from .tasks import send_patient_access_granted_notification
-            transaction.on_commit(
-                lambda: send_patient_access_granted_notification.delay(grant.pk)
-            )
+        # Prevent a practitioner from updating another practitioner
+        if request.user.is_practitioner and user.is_practitioner:
             return Response(
-                {"detail": _("Access granted."), "immediate": True},
-                status=status.HTTP_200_OK,
+                {"detail": "Cannot update another practitioner."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
-        from .tasks import send_patient_access_confirmation
-        transaction.on_commit(
-            lambda: send_patient_access_confirmation.delay(grant.pk)
-        )
+        return super().update(request, *args, **kwargs)
 
-        return Response(
-            {
-                "detail": _("A confirmation request has been sent to the patient."),
-                "immediate": False,
-            },
-            status=status.HTTP_202_ACCEPTED,
-        )
+    def partial_update(self, request, *args, **kwargs):
+        """Prevent partially updating users with superuser, staff access, or users in groups."""
+        user = self.get_object()
+
+        # Prevent updating superusers and staff users
+        if user.is_superuser or user.is_staff:
+            return Response(
+                {"detail": "Cannot update users with portal or super admin access."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+
+        # Prevent a practitioner from updating another practitioner
+        if request.user.is_practitioner and user.is_practitioner:
+            return Response(
+                {"detail": "Cannot update another practitioner."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return super().partial_update(request, *args, **kwargs)
 
 
 class OpenIDAdapter(OpenIDConnectOAuth2Adapter):
@@ -1840,8 +1730,6 @@ class PasswordResetView(DjRestAuthPasswordResetView):
 class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
     """Password reset confirm endpoint controlled by DISABLE_PASSWORD_LOGIN setting for practitioners."""
 
-    throttle_classes = [PasswordResetConfirmRateThrottle]
-
     def post(self, request, *args, **kwargs):
         # For password reset confirm, we can't easily check user type before validation
         # So we allow the reset to proceed - the practitioner shouldn't have received the email anyway
@@ -1849,270 +1737,72 @@ class PasswordResetConfirmView(DjRestAuthPasswordResetConfirmView):
         return super().post(request, *args, **kwargs)
 
 
-class IdentifierSerializer(serializers.Serializer):
-    identifier = serializers.CharField()
+class RegisterView(DjRestAuthRegisterView):
+    """Registration endpoint controlled by ENABLE_REGISTRATION setting."""
 
-
-class VerifyCodeSerializer(IdentifierSerializer):
-    code = serializers.CharField()
-
-
-class RegisterView(APIView):
-    """Sign up from a single field: an email address or a phone number.
-
-    Deliberately not a dj-rest-auth ``RegisterView`` any more. Its
-    ``perform_create`` mints a JWT and runs allauth's ``complete_signup``, both
-    of which assume an email address and neither of which this flow uses — and
-    the JWT would be minted on the *existing* account when the serializer
-    silently returns one.
-    """
-
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_classes = [
-        RegistrationRateThrottle,
-        RegistrationDailyRateThrottle,
-        RegistrationIdentifierRateThrottle,
-    ]
-
-    @extend_schema(request=IdentifierSerializer, responses={201: None})
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         if not constance_config.enable_registration:
             return Response(
-                {"detail": _("Registration is currently disabled.")},
+                {"detail": "Registration is currently disabled."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        super().create(request, *args, **kwargs)
 
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save(request)
-
-        # An identifier already in use is not an error: the serializer returned
-        # the existing account, and sending the code turns this into a sign-in.
-        # Skipping it because the account was already verified would leave the
-        # person waiting on the code screen for a message that never comes.
-        # Practitioners are the exception — the verify endpoint refuses them,
-        # so a code would be useless.
-        if not user.is_practitioner:
-            send_verification_code(user, channel_for(request.data.get("identifier")))
+        # Send email verification message
+        email = request.data.get("email")
+        if email:
+            user = User.objects.find_by_email(email)
+            if user and not user.email_verified:
+                user.email_verification_token = str(uuid.uuid4())
+                user.save(update_fields=["email_verification_token"])
+                Message.objects.create(
+                    sent_to=user,
+                    template_system_name="email_verification",
+                    content_type=ContentType.objects.get_for_model(user),
+                    object_id=user.pk,
+                    in_notification=False,
+                    additionnal_link_args={"token": user.email_verification_token},
+                )
 
         return Response(
-            {"detail": _("A verification code has been sent to you.")},
+            {
+                "detail": _("A verification email has been sent to your email address.")
+            },
             status=status.HTTP_201_CREATED,
         )
 
 
-def channel_for(identifier):
-    """Delivery channel matching the identifier someone typed, or None."""
-    try:
-        kind, _value = resolve_identifier(identifier)
-    except serializers.ValidationError:
-        return None
-    return CommunicationMethod.email if kind == EMAIL else CommunicationMethod.sms
+class EmailVerifyView(APIView):
+    """Verify user email address via token."""
 
-
-# Both carry the code and neither carries a link; they differ only in what
-# they tell the reader they are doing.
-SIGN_UP_TEMPLATE = "email_verification"
-SIGN_IN_TEMPLATE = "your_authentication_code"
-CODE_TEMPLATES = [SIGN_UP_TEMPLATE, SIGN_IN_TEMPLATE]
-
-
-def send_verification_code(user, channel=None):
-    """Issue a code for ``user`` and hand it to the messaging pipeline.
-
-    ``channel`` is pinned on the message rather than inherited from the
-    account: someone the clinic already knows as an email contact may well sign
-    up with their phone, and the code has to reach the identifier they just
-    used, not the one already on file.
-
-    An account already claimed by its owner is signing in, whatever screen the
-    request came from — telling them to "finish creating your account" would be
-    plainly wrong. Verification is what marks an account claimed, so this reads
-    the same pair it sets.
-
-    Asking again shortly after sends the same code, or nothing at all within
-    the resend delay (see ``User.issue_verification_code``).
-    """
-    claimed = user.is_active and not user.temporary
-    with transaction.atomic():
-        user = User.objects.select_for_update().get(pk=user.pk)
-        if not user.issue_verification_code():
-            return
-        with translation.override(user.preferred_language):
-            Message.objects.create(
-                sent_to=user,
-                template_system_name=(
-                    SIGN_IN_TEMPLATE if claimed else SIGN_UP_TEMPLATE
-                ),
-                content_type=ContentType.objects.get_for_model(user),
-                object_id=user.pk,
-                in_notification=False,
-                communication_method=channel,
-            )
-
-
-class AccountVerifyView(APIView):
-    """Claim an account with the 6-digit code sent to its email or phone.
-
-    On success the caller is signed in: holding the code proves control of the
-    channel, which is the same proof the passwordless login flow accepts.
-    """
-
-    permission_classes = [AllowAny]
+    permission_classes = []
     authentication_classes = []
-    throttle_classes = [EmailVerifyRateThrottle, EmailVerifyCodeRateThrottle]
 
-    def invalid(self):
-        """Every failure answers the same way.
-
-        Telling "unknown account" apart from "wrong code" would turn the
-        endpoint into an oracle. Translated per request, not once at import
-        time, so the recipient's language is honoured.
-        """
-        return Response(
-            {"detail": _("Invalid or expired verification code.")},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    @extend_schema(request=VerifyCodeSerializer, responses={200: None})
-    def post(self, request):
-        serializer = VerifyCodeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return self.invalid()
-
-        try:
-            kind, _value = resolve_identifier(serializer.validated_data["identifier"])
-            user = User.objects.find_by_identifier(
-                serializer.validated_data["identifier"]
-            )
-        except serializers.ValidationError:
-            return self.invalid()
-        if user is None:
-            return self.invalid()
-
-        # This route signs people in, so it must not become a way around the
-        # SSO-only policy that LoginView and PasswordResetView enforce for
-        # practitioners.
-        if user.is_practitioner:
-            return self.invalid()
-
-        code = serializer.validated_data["code"]
-
-        with transaction.atomic():
-            # Re-read under a row lock: without it, concurrent guesses all read
-            # the same attempt counter and get far more than three tries.
-            user = User.objects.select_for_update().get(pk=user.pk)
-
-            expired = (
-                not user.verification_code_issued_at
-                or timezone.now() - user.verification_code_issued_at
-                > VERIFICATION_CODE_TTL
-            )
-            if (
-                user.verification_code is None
-                or expired
-                or user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS
-            ):
-                return self.invalid()
-
-            if not codes_match(user.verification_code, code):
-                user.verification_attempts += 1
-                # Burn the code on the last allowed try so a fresh one has to be
-                # requested instead of the counter being the only guard.
-                if user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
-                    user.verification_code = None
-                user.save(
-                    update_fields=["verification_attempts", "verification_code"]
-                )
-                return self.invalid()
-
-            # Only past this point is the caller known to hold the code. Any
-            # short-circuit above it would hand out a session for free.
-            if kind == EMAIL:
-                user.email_verified = True
-            # Follow the identifier they just proved they own. It matters for
-            # an account the clinic already knew by email whose owner signs up
-            # with their phone: without this they would keep receiving
-            # everything on the address they chose not to use, and onboarding
-            # would offer the wrong channel back to them.
-            user.communication_method = (
-                CommunicationMethod.email if kind == EMAIL else CommunicationMethod.sms
-            )
-            # Claiming an account with a code makes it the holder's own, so it
-            # is no longer the throwaway an invitation created.
-            user.temporary = False
-            # Activating is for finishing a sign-up, not for bringing back an
-            # account somebody disabled on purpose.
-            if not user.last_login:
-                user.is_active = True
-            user.verification_code = None
-            user.verification_attempts = 0
-            # verification_code_created_at is deliberately left alone: refreshing
-            # it would open AnonymousTokenAuthView's grace period.
-            user.save(
-                update_fields=[
-                    "email_verified",
-                    "communication_method",
-                    "temporary",
-                    "is_active",
-                    "verification_code",
-                    "verification_attempts",
-                ]
-            )
-            user.received_messages.filter(
-                template_system_name__in=CODE_TEMPLATES
-            ).delete()
-
-        if not user.is_active:
-            return self.invalid()
-
-        refresh = TenantRefreshToken.for_user(user)
-        return Response(
-            {
-                "detail": _("Account verified successfully."),
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            }
-        )
-
-
-class VerificationResendView(APIView):
-    """Send a new verification code to an email address or phone number."""
-
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_classes = [VerificationCodeRateThrottle, VerificationCodeIPRateThrottle]
-
-    @extend_schema(request=IdentifierSerializer, responses={200: None})
-    def post(self, request):
-        serializer = IdentifierSerializer(data=request.data)
-        user = None
-        if serializer.is_valid():
-            try:
-                user = User.objects.find_by_identifier(
-                    serializer.validated_data["identifier"]
-                )
-            except serializers.ValidationError:
-                user = None
-
-        if user is not None and not user.is_practitioner:
-            send_verification_code(
-                user, channel_for(request.data.get("identifier"))
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response(
+                {"detail": "Verification token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Same answer whether the account is unknown, already verified or just
-        # got a code: nothing here should confirm that an account exists.
-        return Response(
-            {
-                "detail": _(
-                    "If this account needs verification, a code has been sent."
-                )
-            }
-        )
+        user = User.objects.filter(email_verification_token=token).first()
+        if not user:
+            return Response(
+                {"detail": "Invalid or expired verification token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.email_verified = True
+        user.email_verification_token = None
+        user.is_active = True
+        user.save(update_fields=["email_verified", "email_verification_token", "is_active"])
+
+        return Response({"detail": "Email verified successfully."})
 
 
 class TestRTCView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -2158,6 +1848,7 @@ class TestRTCView(APIView):
 
 
 class UserDashboardView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -2210,14 +1901,6 @@ class UserDashboardView(APIView):
                         status=RequestStatus.accepted,
                         appointment__status="scheduled",
                     )
-                    # An upcoming appointment only keeps the request on the
-                    # dashboard while its follow-up is still open; once the
-                    # consultation is closed the card, appointment included,
-                    # has to disappear.
-                    & (
-                        Q(consultation__isnull=True)
-                        | Q(consultation__closed_at__isnull=True)
-                    )
                 )
             )
             .order_by("-id")
@@ -2244,25 +1927,13 @@ class UserDashboardView(APIView):
             user,
         )
 
-        # An appointment whose consultation is closed belongs to a finished
-        # follow-up: the patient dashboard must not surface it any more,
-        # neither as the next appointment nor as an orphan one. Appointments
-        # with no consultation at all stay visible.
-        open_consultation_q = Q(consultation__isnull=True) | Q(
-            consultation__closed_at__isnull=True
-        )
-
-        # Next upcoming appointment within the active join window. A completed
-        # or no-show appointment stays listed while that window lasts: it is
-        # what carries the join button, and a call must remain rejoinable after
-        # it has been qualified.
+        # Next upcoming appointment within the active join window
         next_appointment = (
             Appointment.objects.filter(
-                open_consultation_q,
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
-                status__in=JOINABLE_APPOINTMENT_STATUSES,
+                status="scheduled",
             )
             .distinct()
             .order_by("scheduled_at")
@@ -2274,11 +1945,10 @@ class UserDashboardView(APIView):
             .exclude(
                 consultation__request__in=user_requests,
             ).filter(
-                open_consultation_q,
                 participant__user=user,
                 participant__is_active=True,
                 scheduled_at__gte=active_cutoff,
-                status__in=JOINABLE_APPOINTMENT_STATUSES,
+                status="scheduled",
             )
             .distinct()
             .order_by("scheduled_at")
@@ -2311,8 +1981,7 @@ class UserDashboardView(APIView):
 
 class SendVerificationCodeView(APIView):
     """
-    Generate and send a verification code to a contact's email address or
-    phone number for passwordless authentication.
+    Generate and send a verification code to a contact's email for passwordless authentication.
     """
 
     permission_classes = [AllowAny]
@@ -2320,8 +1989,21 @@ class SendVerificationCodeView(APIView):
 
     @extend_schema(
         summary="Send Verification Code",
-        description="Generate and send a verification code for passwordless authentication. The identifier is either an email address or a phone number; `email` is still accepted for older clients.",
-        request=IdentifierSerializer,
+        description="Generate and send a verification code for passwordless authentication. Automatically detects if the email belongs to a contact or user.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Email address to send the verification code to",
+                        "example": "user@example.com",
+                    },
+                },
+                "required": ["email"],
+            }
+        },
         responses={
             200: {
                 "description": "Verification code sent successfully",
@@ -2340,25 +2022,17 @@ class SendVerificationCodeView(APIView):
         },
     )
     def post(self, request):
-        # `email` stays accepted: it is what older clients send, and an address
-        # is a valid identifier anyway.
-        identifier = request.data.get("identifier") or request.data.get("email")
+        email = request.data.get("email")
 
-        if not identifier:
+        if not email:
             return Response(
-                {"error": "identifier is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Resolve case-insensitively for an address, across stored formats for a
-        # number. Legacy duplicates must not turn into a 500 here: send the code
-        # to the account the person actually signs in with.
-        try:
-            user_instance = User.objects.find_by_identifier(identifier)
-        except serializers.ValidationError:
-            # Unknown-shaped input answers like an unknown account, so this
-            # endpoint cannot be used to probe which identifiers exist.
-            user_instance = None
+        # Resolve the account case-insensitively. Legacy duplicates (same address
+        # stored with a different case) must not turn into a 500 here: send the
+        # code to the account the person actually signs in with.
+        user_instance = User.objects.find_by_email(email)
 
         if user_instance is None:
             return Response(
@@ -2366,68 +2040,38 @@ class SendVerificationCodeView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        # The magic link already delivered by message is left untouched: the
-        # caller gets a code login token of its own, so asking for a code
-        # breaks neither the links nor the tabs already out.
-        with transaction.atomic():
-            user_instance = User.objects.select_for_update().get(pk=user_instance.pk)
-            if user_instance.issue_verification_code(keep_auth_token=True):
-                with translation.override(user_instance.preferred_language):
-                    Message.objects.create(
-                        sent_to=user_instance,
-                        template_system_name="your_authentication_code",
-                        content_type=ContentType.objects.get_for_model(user_instance),
-                        object_id=user_instance.pk,
-                        communication_method=channel_for(identifier),
-                    )
+        # Generate a verification code (6 digits)
+        user_instance.verification_code = 100000 + secrets.randbelow(900000)
+        user_instance.verification_code_created_at = timezone.now()
 
-        payload = {"detail": "Verification code sent successfully"}
-        # Accounts that sign in on their magic link alone (invited participants,
-        # manual contacts) are not offered this way in: they get no token, so
-        # the login form cannot exchange their code for a session.
-        if not user_instance.authenticates_without_code:
-            payload["auth_token"] = code_login_token(user_instance)
+        user_instance.one_time_auth_token = str(uuid.uuid4())
+        user_instance.verification_attempts = 0
+        user_instance.save(
+            update_fields=[
+                "verification_code",
+                "verification_code_created_at",
+                "verification_attempts",
+                "one_time_auth_token",
+            ]
+        )
 
-        return Response(payload, status=status.HTTP_200_OK)
-
-class PatientVisibilityGrantConfirmView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk):
-        try:
-            grant = PatientVisibilityGrant.objects.select_related(
-                "organisation", "requested_by"
-            ).get(pk=pk)
-        except PatientVisibilityGrant.DoesNotExist:
-            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
-
-        if grant.patient_id != request.user.pk:
-            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
-
-        return Response({
-            "organisation_name": grant.organisation.name if grant.organisation else None,
-            "requested_by_name": grant.requested_by.name if grant.requested_by else None,
-            "confirmed": grant.confirmed_at is not None,
-        })
-
-    def post(self, request, pk):
-        try:
-            grant = PatientVisibilityGrant.objects.select_related("patient").get(pk=pk)
-        except PatientVisibilityGrant.DoesNotExist:
-            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
-
-        if grant.patient_id != request.user.pk:
-            return Response({"detail": _("Not found.")}, status=status.HTTP_404_NOT_FOUND)
-
-        if grant.confirmed_at is None:
-            grant.confirmed_at = timezone.now()
-            grant.save(update_fields=["confirmed_at"])
-            from .tasks import send_patient_access_confirmed_notification
-            transaction.on_commit(
-                lambda: send_patient_access_confirmed_notification.delay(grant.pk)
+        # Render HTML template
+        with translation.override(user_instance.preferred_language):
+            Message.objects.create(
+                sent_to=user_instance,
+                template_system_name="your_authentication_code",
+                content_type=ContentType.objects.get_for_model(user_instance),
+                object_id=user_instance.pk,
             )
 
-        return Response({"detail": _("Access confirmed.")})
+        return Response(
+            {
+                "detail": "Verification code sent successfully",
+                "auth_token": user_instance.one_time_auth_token,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 # -- FHIR Patient / Practitioner -------------------------------------------
 
@@ -2435,22 +2079,22 @@ from fhir_server.mixins import FhirViewSetMixin  # noqa: E402
 from .fhir import PatientFhirMapper, PractitionerFhirMapper  # noqa: E402
 
 
-class PatientViewSet(ManagedUserViewSetMixin, FhirViewSetMixin, viewsets.ModelViewSet):
+class PatientViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
     """
-    FHIR R4 Patient endpoint. All requests run through the same rules as
-    /api/users/ (`ManagedUserViewSetMixin`) and return FHIR responses when
-    the client requests `application/fhir+json`. DELETE only deactivates.
+    FHIR R4 Patient endpoint. All requests run through the HCW permission
+    model (`IsAuthenticated, IsPractitioner`) and return FHIR responses
+    when the client requests `application/fhir+json`.
     """
 
     queryset = User.objects.filter(is_practitioner=False)
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     fhir_class = PatientFhirMapper
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
-        return self._filter_patients(
-            self.queryset.filter(is_active=True), self.request.user
-        ).distinct()
+        return self.queryset.filter(is_active=True)
 
     @action(detail=True, methods=["post"])
     def access_url(self, request, pk=None):
@@ -2497,25 +2141,18 @@ class PatientViewSet(ManagedUserViewSetMixin, FhirViewSetMixin, viewsets.ModelVi
         })
 
 
-class PractitionerViewSet(ManagedUserViewSetMixin, FhirViewSetMixin, viewsets.ModelViewSet):
-    """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`).
-
-    Read-only. Practitioners are never created through the API (see
-    consultations/fhir_participants.py) and each one edits their own profile
-    through /api/auth/user/, so a write here could only be a practitioner
-    rewriting a colleague's or an administrator's account (audit C-02).
-    """
+class PractitionerViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
+    """FHIR R4 Practitioner endpoint (users with `is_practitioner=True`)."""
 
     queryset = User.objects.filter(is_practitioner=True)
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated, IsPractitioner]
     pagination_class = UniversalPagination
     fhir_class = PractitionerFhirMapper
-    http_method_names = ["get", "head", "options"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
-        return self._filter_practitioners(
-            self.queryset.filter(is_active=True), self.request.user
-        ).distinct()
-
+        return self.queryset.filter(is_active=True)
 
 class DAVAppPasswordViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

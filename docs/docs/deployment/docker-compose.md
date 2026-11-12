@@ -127,19 +127,6 @@ This creates test users (password: `Test1234`). See the [README](https://github.
 | **db** | internal | PostgreSQL 15 |
 | **redis** | internal | Redis 7 |
 
-## Health Checks
-
-Every long running service declares a health check, so `docker compose ps` reports the real state and the frontends only start once the API answers.
-
-| Service | Probe |
-|---------|-------|
-| **api** | `GET /api/health/`, which runs before tenant resolution and checks PostgreSQL and Redis. Reported unhealthy while `MAINTENANCE=True` |
-| **celery** | `celery inspect ping` against this worker only, so a healthy replica cannot mask a dead one |
-| **scheduler** | Celery Beat has no remote control API: the beat process is checked with `pgrep` |
-| **practitioner**, **patient**, **admin** | Local Nginx request, no backend call, so they stay green when the API is down |
-| **db** | `pg_isready` |
-| **redis** | `redis-cli ping` |
-
 ## Persistent Volumes
 
 Data is stored in the `./data/` directory:
@@ -148,11 +135,4 @@ Data is stored in the `./data/` directory:
 |------|---------|
 | `./data/postgres_data/` | PostgreSQL data |
 | `./data/redis_data/` | Redis data |
-| `./data/uploads/` | Uploads (`MEDIA_ROOT`), shared by `api` and `celery`. Unused when S3 is configured |
-
-!!! warning "Uploads permissions"
-    The backend containers run as uid 1000. Create the directory with the right owner before the first start, otherwise every upload fails:
-    ```bash
-    mkdir -p data/uploads && sudo chown 1000:1000 data/uploads
-    ```
 

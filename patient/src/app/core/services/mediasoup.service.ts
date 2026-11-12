@@ -166,7 +166,7 @@ export class MediasoupService implements VideoCallImpl {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: this.cameraDeviceId
           ? { deviceId: { ideal: this.cameraDeviceId } }
-          : { facingMode: { ideal: 'user' } },
+          : true,
       });
       const track = stream.getVideoTracks()[0];
       this.webcamProducer = await this.sendTransport.produce({
@@ -295,8 +295,6 @@ export class MediasoupService implements VideoCallImpl {
   async switchCamera(deviceId: string): Promise<void> {
     this.cameraDeviceId = deviceId;
     if (this.cameraEnabled.value) {
-      // Mobile browsers generally cannot hold the front and rear cameras at
-      // once, so release the active capture before opening the next one.
       await this.enableCamera(false);
       await this.enableCamera(true);
     }
@@ -313,14 +311,6 @@ export class MediasoupService implements VideoCallImpl {
   async switchSpeaker(_deviceId: string): Promise<void> {
     // Speaker selection happens at the HTMLMediaElement level via setSinkId;
     // the mediasoup signaling layer is not involved.
-  }
-
-  async supportsBackgroundBlur(): Promise<boolean> {
-    return false;
-  }
-
-  async setBackgroundBlur(_enabled: boolean): Promise<void> {
-    throw new Error('Background blur is not supported by this video provider');
   }
 
   isConnected(): boolean {

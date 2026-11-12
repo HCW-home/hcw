@@ -1,8 +1,22 @@
-import { Component, OnInit, inject } from "@angular/core";
+import { Component, OnInit, ViewChild, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from "@angular/forms";
 import {
   IonContent,
+  IonItem,
+  IonInput,
+  IonButton,
+  IonIcon,
   IonText,
+  IonSpinner,
   NavController,
+  LoadingController,
+  ToastController,
 } from "@ionic/angular/standalone";
 import { ActivatedRoute } from "@angular/router";
 import { Capacitor } from "@capacitor/core";
@@ -14,7 +28,6 @@ import { ActionHandlerService } from "../../core/services/action-handler.service
 import { DeeplinkService } from "../../core/services/deeplink.service";
 import { LanguageSelectorComponent } from "../../shared/components/language-selector/language-selector.component";
 import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
-import { AuthFormComponent } from '../../shared/components/auth-form/auth-form.component';
 
 @Component({
   selector: "app-login",
@@ -22,57 +35,113 @@ import { AuthFormComponent } from '../../shared/components/auth-form/auth-form.c
   styleUrls: ["./login.page.scss"],
   standalone: true,
   imports: [
+    CommonModule,
+    ReactiveFormsModule,
     TranslatePipe,
     IonContent,
+    IonItem,
+    IonInput,
+    IonButton,
+    IonIcon,
     IonText,
-    LanguageSelectorComponent,
-    AuthBrandingComponent,
-    AuthFormComponent,
-  ],
+    IonSpinner,
+    LanguageSelectorComponent, AuthBrandingComponent],
 })
 export class LoginPage implements OnInit {
   private t = inject(TranslationService);
   private mobileApp = inject(MobileAppService);
   private deeplinkService = inject(DeeplinkService);
 
-  initialIdentifier = '';
-  // Coming from a link received by mail/SMS: the recipient already knows which
-  // account they own, so the form goes past the identifier step on its own.
-  skipEmailStep = false;
+  @ViewChild('passwordInput') passwordInput!: IonInput;
+
+  step: 'email' | 'credentials' | 'verification' = 'email';
+
+  emailForm: FormGroup;
+  passwordForm: FormGroup;
+  verificationForm: FormGroup;
+
+  showPassword = false;
+  registrationEnabled = false;
+  passwordLoginDisabled = false;
   // Invite web users to open the native app (only before they sign in, and
   // never inside the native app itself).
   showDeeplinkBanner = false;
+  // Whether patients are allowed to authenticate with a password on the patient
+  // app. Off by default: patients then receive an email/SMS code instead.
+  patientPasswordLoginEnabled = false;
   // Native builds talk to the instance picked at first launch; let the user
   // switch away from it, otherwise a wrong URL locks them out of the app.
   isNative = Capacitor.isNativePlatform();
   activeHost = this.deeplinkService.getActiveHost();
 
+  isLoading = false;
+  isResending = false;
+  errorMessage: string | null = null;
+
+  private authToken: string | null = null;
+
   constructor(
+    private fb: FormBuilder,
     private route: ActivatedRoute,
     private authService: AuthService,
     private actionHandler: ActionHandlerService,
     private navCtrl: NavController,
-  ) {}
+    private loadingCtrl: LoadingController,
+    private toastCtrl: ToastController,
+  ) {
+    this.emailForm = this.fb.group({
+      email: ["", [Validators.required, Validators.email]],
+    });
+    this.passwordForm = this.fb.group({
+      password: ["", [Validators.required, Validators.minLength(6)]],
+    });
+    this.verificationForm = this.fb.group({
+      verification_code: ["", [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    });
+  }
+
+  get email(): string {
+    return this.emailForm.get('email')?.value || '';
+  }
 
   ngOnInit() {
     const email = this.route.snapshot.queryParamMap.get("email");
     const action = this.route.snapshot.queryParamMap.get("action");
     if (email) {
-      this.initialIdentifier = email;
+      this.emailForm.patchValue({ email });
     }
-    this.skipEmailStep = !!email && !!action;
-
+    // Coming from a link received by mail/SMS: the recipient already knows
+    // which account they own, so skip the email step. Depending on the config,
+    // onContinue() then shows the password form or sends the code straight away.
+    const skipEmailStep = !!email && !!action && this.emailForm.valid;
     this.authService.getConfig().subscribe({
       next: (config: any) => {
-        if (!config) return;
+        // getConfig() emits null when the backend is unreachable; guard so the
+        // page renders sane defaults instead of throwing on null.property.
+        if (!config) {
+          if (skipEmailStep) {
+            this.onContinue();
+          }
+          return;
+        }
+        this.registrationEnabled =
+          !!config.registration_enabled && !config.force_temporary_patients;
+        this.passwordLoginDisabled = !!config.force_temporary_patients;
+        this.patientPasswordLoginEnabled = !!config.enable_patient_password_login;
         // Only offer the native app on a certified instance — deep-linking to
         // an uncertified one would fail.
         this.showDeeplinkBanner =
           !!config.enable_deeplink &&
           !!config.instance_certified &&
           !Capacitor.isNativePlatform();
+        if (this.passwordLoginDisabled) {
+          this.passwordForm.get('password')?.disable({ emitEvent: false });
+        }
         if (config.languages?.length) {
           this.t.loadLanguages(config.languages);
+        }
+        if (skipEmailStep) {
+          this.onContinue();
         }
       },
     });
@@ -87,25 +156,178 @@ export class LoginPage implements OnInit {
     this.mobileApp.openInApp();
   }
 
-  navigateAfterAuth() {
+  /** Password login is offered only when enabled for patients and the account
+   *  is not forced to be a temporary (passwordless) one. */
+  get canUsePasswordLogin(): boolean {
+    return this.patientPasswordLoginEnabled && !this.passwordLoginDisabled;
+  }
+
+  onContinue() {
+    if (this.emailForm.invalid) {
+      return;
+    }
+    this.errorMessage = null;
+    if (this.canUsePasswordLogin) {
+      this.step = 'credentials';
+      setTimeout(() => this.passwordInput?.setFocus(), 300);
+    } else {
+      // No password login for patients: send the email/SMS code straight away.
+      this.sendCode();
+    }
+  }
+
+  goBack() {
+    this.step = 'email';
+    this.errorMessage = null;
+    this.passwordForm.reset();
+    this.verificationForm.reset();
+    this.authToken = null;
+  }
+
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+
+  async onLogin() {
+    if (this.emailForm.invalid || this.passwordForm.invalid) {
+      return;
+    }
+
+    const loading = await this.loadingCtrl.create({
+      message: this.t.instant('login.loggingIn'),
+      spinner: "crescent",
+    });
+    await loading.present();
+
+    const credentials = {
+      email: this.email,
+      password: this.passwordForm.get('password')?.value,
+    };
+
+    this.authService.login(credentials).subscribe({
+      next: async () => {
+        await loading.dismiss();
+        this.navigateAfterAuth();
+      },
+      error: async (error) => {
+        await loading.dismiss();
+        const toast = await this.toastCtrl.create({
+          message: error.error?.detail || this.t.instant('login.invalidCredentials'),
+          duration: 3000,
+          position: "top",
+          color: "danger",
+        });
+        await toast.present();
+      },
+    });
+  }
+
+  sendCode() {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.authService.sendVerificationCode(this.email).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.authToken = response.auth_token;
+        this.step = 'verification';
+      },
+      error: async (error) => {
+        this.isLoading = false;
+        const toast = await this.toastCtrl.create({
+          message: error.error?.error || this.t.instant('login.genericError'),
+          duration: 3000,
+          position: "top",
+          color: "danger",
+        });
+        await toast.present();
+      },
+    });
+  }
+
+  submitVerificationCode() {
+    if (this.verificationForm.invalid || !this.authToken) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    const verificationCode = this.verificationForm.get('verification_code')?.value;
+
+    this.authService.loginWithToken({
+      auth_token: this.authToken,
+      verification_code: verificationCode,
+    }).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        if (response.access && response.refresh) {
+          this.navigateAfterAuth();
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        if (error.status === 429) {
+          this.errorMessage = error.error?.error || this.t.instant('login.tooManyAttempts');
+        } else if (error.status === 401) {
+          this.errorMessage = error.error?.error || this.t.instant('login.invalidVerificationCode');
+        } else {
+          this.errorMessage = this.t.instant('login.genericError');
+        }
+      },
+    });
+  }
+
+  resendCode() {
+    if (this.isResending) {
+      return;
+    }
+
+    this.isResending = true;
+    this.errorMessage = null;
+
+    this.authService.sendVerificationCode(this.email).subscribe({
+      next: async (response) => {
+        this.isResending = false;
+        this.authToken = response.auth_token;
+        this.verificationForm.reset();
+        const toast = await this.toastCtrl.create({
+          message: this.t.instant('login.codeSent'),
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+        await toast.present();
+      },
+      error: async () => {
+        this.isResending = false;
+        const toast = await this.toastCtrl.create({
+          message: this.t.instant('login.genericError'),
+          duration: 2000,
+          position: "top",
+          color: "danger",
+        });
+        await toast.present();
+      },
+    });
+  }
+
+  private navigateAfterAuth() {
     const action = this.route.snapshot.queryParamMap.get("action");
     const id = this.route.snapshot.queryParamMap.get("id");
 
     if (action) {
       this.actionHandler.navigateToAction(action, id);
-    } else if (!this.actionHandler.runPendingAction()) {
+    } else {
       this.navCtrl.navigateRoot("/home");
     }
   }
 
   goToRegister() {
-    const action = this.route.snapshot.queryParamMap.get("action");
-    this.navCtrl.navigateForward("/register", {
-      queryParams: action ? { action } : {},
-    });
+    this.navCtrl.navigateForward("/register");
   }
 
-  forgotPassword(identifier: string): void {
-    this.navCtrl.navigateForward("/forgot-password", { queryParams: { email: identifier } });
+  forgotPassword(): void {
+    this.navCtrl.navigateForward("/forgot-password", { queryParams: { email: this.email } });
   }
 }

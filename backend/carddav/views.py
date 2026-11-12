@@ -1,3 +1,4 @@
+import base64
 import uuid
 from xml.etree import ElementTree as ET
 
@@ -8,9 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from core.throttling import ratelimit
-from dav.auth import require_auth
-from users.models import User
+from users.models import User, DAVAppPassword
 
 DAV = "DAV:"
 CARDDAV = "urn:ietf:params:xml:ns:carddav"
@@ -21,9 +20,34 @@ NSMAP = {"D": DAV, "C": CARDDAV}
 def _tag(ns, local):
     return f"{{{ns}}}{local}"
 
+def _get_user_from_request(request):
+    """Authenticate via Basic Auth with email:password or DAVAppPassword."""
+    from django.contrib.auth import authenticate
+
+    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+    if not auth_header.startswith("Basic "):
+        return None
+    try:
+        decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
+        username, _, password = decoded.partition(":")
+        if not password:
+            return None
+    except Exception:
+        return None
+    
+    user = authenticate(request, username=username, password=password)
+    if user:
+        return user
+    return DAVAppPassword.authenticate(username, password)
+
 def _require_auth(request):
     """Return user or an HTTP 401 response."""
-    return require_auth(request, realm="HCW CardDAV")
+    user = _get_user_from_request(request)
+    if user is None:
+        response = HttpResponse("Unauthorized", status=401)
+        response["WWW-Authenticate"] = 'Basic realm="HCW CardDAV"'
+        return None, response
+    return user, None
 
 def _user_to_vcard(user):
     domain = getattr(settings, "SITE_DOMAIN", "hcw.local")
@@ -114,10 +138,6 @@ def _multistatus_response(multistatus):
     return response
 
 
-@method_decorator(
-    ratelimit(rate="60/min", scope="carddav"),
-    name="dispatch",
-)
 @method_decorator(csrf_exempt, name="dispatch")
 class CardDAVAddressbookView(View):
     """Handle addressbook collection: PROPFIND, REPORT, GET."""

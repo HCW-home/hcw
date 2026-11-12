@@ -1,6 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import type { LocalVideoTrack } from 'livekit-client';
 import { IMediaDevices } from '../models/media-device.model';
 
 @Injectable({
@@ -15,8 +14,6 @@ export class MediaDeviceService implements OnDestroy {
   private audioLevelSubject = new BehaviorSubject<number>(0);
 
   private previewStream: MediaStream | null = null;
-  private previewVideoTrack: LocalVideoTrack | null = null;
-  private previewBackgroundBlurEnabled = false;
   private audioContext: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private audioMonitorStream: MediaStream | null = null;
@@ -48,73 +45,21 @@ export class MediaDeviceService implements OnDestroy {
   async startVideoPreview(deviceId?: string): Promise<MediaStream> {
     this.stopVideoPreview();
     const constraints: MediaStreamConstraints = {
-      video: deviceId
-        ? { deviceId: { exact: deviceId } }
-        : { facingMode: { ideal: 'user' } },
+      video: deviceId ? { deviceId: { exact: deviceId } } : true,
     };
-    const sourceStream = await navigator.mediaDevices.getUserMedia(constraints);
-    const sourceTrack = sourceStream.getVideoTracks()[0];
-    const { LocalVideoTrack } = await import('livekit-client');
-    this.previewVideoTrack = new LocalVideoTrack(sourceTrack);
-    this.previewStream = new MediaStream([this.previewVideoTrack.mediaStreamTrack]);
-    if (this.previewBackgroundBlurEnabled) {
-      await this.applyPreviewBackgroundBlur();
-    }
+    this.previewStream = await navigator.mediaDevices.getUserMedia(constraints);
     return this.previewStream;
   }
 
   stopVideoPreview(): void {
-    if (this.previewVideoTrack) {
-      this.previewVideoTrack.stop();
-      this.previewVideoTrack = null;
-    } else if (this.previewStream) {
+    if (this.previewStream) {
       this.previewStream.getTracks().forEach(t => t.stop());
+      this.previewStream = null;
     }
-    this.previewStream = null;
   }
 
   async switchCamera(deviceId: string): Promise<MediaStream> {
     return this.startVideoPreview(deviceId);
-  }
-
-  async supportsBackgroundBlur(): Promise<boolean> {
-    const { supportsBackgroundProcessors } = await import('@livekit/track-processors');
-    return supportsBackgroundProcessors();
-  }
-
-  async setBackgroundBlur(enabled: boolean): Promise<MediaStream> {
-    if (!this.previewVideoTrack) {
-      throw new Error('Camera preview must be enabled to change the background blur');
-    }
-
-    this.previewBackgroundBlurEnabled = enabled;
-    if (enabled) {
-      await this.applyPreviewBackgroundBlur();
-    } else if (this.previewVideoTrack.getProcessor()) {
-      await this.previewVideoTrack.stopProcessor();
-      this.refreshPreviewStream();
-    }
-    return this.previewStream!;
-  }
-
-  private async applyPreviewBackgroundBlur(): Promise<void> {
-    if (!this.previewVideoTrack || this.previewVideoTrack.getProcessor()) return;
-    const { BackgroundProcessor } = await import('@livekit/track-processors');
-    const processor = BackgroundProcessor({ mode: 'background-blur', blurRadius: 12 });
-    try {
-      await this.previewVideoTrack.setProcessor(processor, true);
-      this.refreshPreviewStream();
-    } catch (error) {
-      await processor.destroy();
-      this.previewBackgroundBlurEnabled = false;
-      throw error;
-    }
-  }
-
-  private refreshPreviewStream(): void {
-    if (this.previewVideoTrack) {
-      this.previewStream = new MediaStream([this.previewVideoTrack.mediaStreamTrack]);
-    }
   }
 
   async startAudioMonitor(deviceId?: string): Promise<void> {
@@ -167,16 +112,11 @@ export class MediaDeviceService implements OnDestroy {
 
   stopPreview(): void {
     this.stopVideoPreview();
-    this.previewBackgroundBlurEnabled = false;
     this.stopAudioMonitor();
   }
 
   getPreviewStream(): MediaStream | null {
     return this.previewStream;
-  }
-
-  getPreviewCameraId(): string | null {
-    return this.previewStream?.getVideoTracks()[0]?.getSettings().deviceId ?? null;
   }
 
   isSpeakerSelectionSupported(): boolean {

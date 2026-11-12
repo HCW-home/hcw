@@ -51,7 +51,6 @@ from .fhir import AppointmentFhirMapper, EncounterFhirMapper, PrescriptionFhirMa
 from fhir_server.mixins import FhirViewSetMixin
 from .filters import AppointmentFilter, ConsultationFilter, ReminderFilter
 from .models import (
-    JOINABLE_APPOINTMENT_STATUSES,
     Appointment,
     AppointmentStatus,
     BookingSlot,
@@ -69,7 +68,6 @@ from .models import (
     Type,
 )
 from .paginations import ConsultationPagination
-from .utils import consultation_access_q, roster_participant_q
 from .permissions import IsPractitioner
 from .serializers import (
     AppointmentAddParticipantsSerializer,
@@ -183,30 +181,30 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
     ordering = ["-_unassigned_request", "-created_at"]
     ordering_fields = ["created_at", "updated_at", "closed_at"]
 
-    # Actions that alter the consultation itself, as opposed to reading it or
-    # tracking one's own state in it (`mark_read`, `join`, `messages`), which
-    # the wider read scope covers.
-    WRITE_ACTIONS = frozenset(
-        {"update", "partial_update", "destroy", "close", "reopen"}
-    )
-
     def get_queryset(self):
         user = self.request.user
-        # Listing and writing share the `accessible_by` scope: the people the
-        # case belongs to. Temporary follow-ups are listed too, so their chats
-        # remain easy to find; the row item flags them as temporary in the UI.
-        # Detail / messages access is deliberately wider — see the else branch.
-        if self.action == "list" or self.action in self.WRITE_ACTIONS:
-            qs = Consultation.objects.accessible_by(
-                user, include_temporary=True
-            ).distinct()
+        # Listing surfaces temporary follow-ups too, so their chats remain easy
+        # to find; the row item flags them as temporary in the UI. Detail/messages
+        # access additionally allows temporary consultations attached to an
+        # appointment the user owns or participates in.
+        if self.action == "list":
+            qs = Consultation.objects.accessible_by(user, include_temporary=True)
         else:
-            # A practitioner can be the beneficiary of a follow-up — asking for
-            # one themselves, or being cared for by a colleague. The message
-            # endpoint already lets them read its messages, so 404ing the
-            # consultation is an inconsistency, not a protection. Detail only,
-            # so their own care stays out of the professional list.
-            qs = Consultation.objects.filter(consultation_access_q(user)).distinct()
+            qs = Consultation.objects.filter(
+                Q(owned_by=user)
+                | Q(created_by=user)
+                | Q(group__users=user)
+                | Q(
+                    temporary=True,
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                )
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
+            ).distinct()
         qs = annotate_unread_count(qs, user)
         qs = annotate_unassigned_request(qs)
         return qs
@@ -259,7 +257,9 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
         allowed_user_ids.discard(None)
         allowed_user_ids.update(
             Participant.objects.filter(
-                roster_participant_q(consultation)
+                appointment__consultation=consultation,
+                is_active=True,
+                is_consultation_visible=True,
             ).values_list("user_id", flat=True)
         )
 
@@ -316,20 +316,6 @@ class ConsultationViewSet(FhirViewSetMixin, CreatedByMixin, viewsets.ModelViewSe
                         _(
                             "Unable to close consultation with appointment scheduled in future"
                         )
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # An active reminder still has a pending occurrence when next_run_at is
-        # in the future; closing would leave messages scheduled on a dead case.
-        if consultation.reminders.filter(
-            is_active=True, next_run_at__gt=now
-        ).exists():
-            return Response(
-                {
-                    "error": _(
-                        "Unable to close consultation with upcoming reminders"
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -575,28 +561,21 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             return AppointmentCreateSerializer
         return AppointmentSerializer
 
-    # Rewriting an appointment or deciding its outcome belongs to the people
-    # who carry the case. Growing or trimming the call roster is also open to
-    # the practitioners invited to it: someone brought into a meeting needs to
-    # pull a colleague in without chasing the organiser.
-    ROSTER_ACTIONS = frozenset({"add_participants", "remove_participant"})
-    WRITE_ACTIONS = frozenset({"create", "update", "partial_update", "set_status"})
-
     def get_queryset(self):
         user = self.request.user
 
-        if self.action in self.ROSTER_ACTIONS:
-            # The roster branch does not go through accessible_by, so it also
-            # covers the temporary consultation of an ad-hoc call, which that
-            # manager filters out. IsPractitioner already turns patients and
-            # guests away, so a roster row reaching here is a practitioner's.
-            return Appointment.objects.filter(
-                Q(created_by=user)
-                | Q(consultation__in=Consultation.objects.accessible_by(user))
-                | Q(participant__user=user, participant__is_active=True)
-            ).distinct()
-
-        if self.action in self.WRITE_ACTIONS:
+        # For create, update, partial_update and the participant moderation
+        # actions: restrict to creator or consultation access. Read actions use
+        # a wider scope that also covers plain participants, which must not be
+        # able to alter the roster.
+        if self.action in [
+            "create",
+            "update",
+            "partial_update",
+            "add_participants",
+            "remove_participant",
+            "set_status",
+        ]:
             return Appointment.objects.filter(
                 Q(created_by=user)
                 | Q(consultation__in=Consultation.objects.accessible_by(user))
@@ -622,28 +601,17 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
             200: {
                 "type": "object",
                 "properties": {
-                    "provider": {"type": "string", "description": "Media server provider"},
                     "url": {"type": "string", "description": "Media server URL"},
                     "token": {
                         "type": "string",
                         "description": "JWT token for RTC connection",
                     },
-                    "room": {"type": "string", "description": "Room name"},
-                    "consultation_id": {
-                        "type": "integer",
-                        "nullable": True,
-                        "description": (
-                            "Follow-up behind the call, or null when the "
-                            "consultation does not let this user in."
-                        ),
-                    },
+                    "room": {"type": "string", "description": "Test room name"},
                 },
                 "example": {
-                    "provider": "livekit",
                     "url": "wss://livekit.example.com",
                     "token": "<jwt-token>",
-                    "room": "3f1c0f9e-1d5a-4d3f-9a2b-8c7d6e5f4a3b",
-                    "consultation_id": 42,
+                    "room": "usertest_123",
                 },
             },
             500: {
@@ -652,7 +620,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 "example": {"detail": "No media server available."},
             },
         },
-        description="Join the appointment call. Returns the media server URL, a JWT token, the room name and the follow-up the call belongs to.",
+        description="Get RTC test connection information for the authenticated user. Returns server URL, JWT token, and room name for testing WebRTC connection.",
     )
     @action(detail=True, methods=["get"])
     def join(self, request, pk=None):
@@ -682,17 +650,6 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         if appointment.type != Type.online:
             return Response(
                 {"detail": _("Cannot join consultation if not online")},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # Completed and no-show appointments stay open: qualifying a call is a
-        # bookkeeping act, not a lock, so participants can go back in. Only a
-        # cancelled or still-draft appointment has no room to enter.
-        if appointment.status not in JOINABLE_APPOINTMENT_STATUSES:
-            return Response(
-                {
-                    "detail": _("Cannot join a cancelled or draft appointment"),
-                    "code": "not_joinable",
-                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -735,17 +692,6 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         channel_layer = get_channel_layer()
         active_participants = appointment.participant_set.filter(is_active=True)
 
-        # The event carries the follow-up id, and the client opens its chat
-        # with it: only tell the participants the consultation lets in, or the
-        # ring answered by someone on the roster alone lands on a 404.
-        from consultations.signals import get_users_to_notification_consultation
-
-        consultation_readers = (
-            get_users_to_notification_consultation(appointment.consultation)
-            if appointment.consultation
-            else set()
-        )
-
         for participant in active_participants:
             if participant.user.pk == request.user.pk:
                 continue
@@ -754,11 +700,7 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 user_group(participant.user.pk),
                 {
                     "type": "appointment",
-                    "consultation_id": (
-                        appointment.consultation.pk
-                        if participant.user.pk in consultation_readers
-                        else None
-                    ),
+                    "consultation_id": appointment.consultation.pk if appointment.consultation else None,
                     "appointment_id": appointment.pk,
                     "state": "participant_joined",
                     "data": {
@@ -778,17 +720,6 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
                 event="participant_joined",
                 content=_("%(user_name)s joined the meeting") % {"user_name": user_name},
             )
-
-        # The client opens the follow-up behind the call as soon as the join
-        # succeeds, and it does not always know its id (deep link, incoming
-        # call). Hand it out under the same rule as the websocket payload
-        # above — `AppointmentSerializer` blanks it for the same reason — or it
-        # points at a 404 for someone the consultation does not let in.
-        call_info["consultation_id"] = (
-            appointment.consultation.pk
-            if appointment.consultation and request.user.pk in consultation_readers
-            else None
-        )
 
         return Response(call_info)
 
@@ -1013,8 +944,10 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         cannot mute themselves (e.g. on speakerphone, or a patient who joined
         with help and is now alone)."""
         appointment = self.get_object()
+        consultation = appointment.consultation
 
-        if not self._can_moderate_call(request.user, appointment):
+        # Only practitioners may moderate the call.
+        if not self._is_doctor(request.user, consultation, appointment):
             return Response(
                 {"error": _("Only practitioners can mute participants")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -1275,20 +1208,6 @@ class AppointmentViewSet(FhirViewSetMixin, viewsets.ModelViewSet):
         }
         for user_pk in recipient_pks:
             async_to_sync(channel_layer.group_send)(user_group(user_pk), payload)
-
-    def _can_moderate_call(self, user, appointment):
-        """Whether ``user`` may act on who is heard in this call.
-
-        The people who carry the case, plus the practitioners actually invited
-        to the meeting: a howling microphone is heard by whoever is in the room,
-        and silencing it cannot wait for the organiser. Being a colleague the
-        directory makes visible is not enough — the read scope of
-        ``get_queryset`` reaches appointments one has nothing to do with, so
-        moderation asks for a roster row.
-        """
-        if self._is_doctor(user, appointment.consultation, appointment):
-            return True
-        return appointment.participant_set.filter(user=user, is_active=True).exists()
 
     def _is_doctor(self, user, consultation, appointment=None):
         """Check if user is a doctor (in Queue group)"""
@@ -1844,15 +1763,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     serializer_class = ConsultationMessageSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
-
-    def list(self, request, *args, **kwargs):
-        """Not exposed: messages are read through their consultation.
-
-        Only the detail route answers GET, for the notification deep links that
-        carry a message id and need the conversation it belongs to.
-        """
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    http_method_names = ["post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         user = self.request.user
@@ -1861,7 +1772,17 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Return messages from consultations the user has access to
         return Message.objects.filter(
-            consultation__in=Consultation.objects.filter(consultation_access_q(user))
+            consultation__in=Consultation.objects.filter(
+                Q(created_by=user)
+                | Q(owned_by=user)
+                | Q(group__users=user)
+                | Q(beneficiary=user)
+                | Q(
+                    appointments__participant__user=user,
+                    appointments__participant__is_active=True,
+                    appointments__participant__is_consultation_visible=True,
+                )
+            )
         ).distinct()
 
     def update(self, request, *args, **kwargs):

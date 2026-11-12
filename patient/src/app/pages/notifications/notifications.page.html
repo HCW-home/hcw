@@ -1,6 +1,6 @@
 <app-header [pageTitle]="'notifications.title' | translate" [showBackButton]="true"></app-header>
 
-<ion-content id="main-content" role="main" class="notifications-content">
+<ion-content class="notifications-content">
   <ion-refresher slot="fixed" (ionRefresh)="refreshNotifications($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
@@ -11,16 +11,16 @@
       <div class="section-header">
         <span class="section-badge">{{ notifications.length }} {{ 'common.total' | translate }}</span>
         <button class="mark-all-btn" (click)="markAllAsRead()">
-          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
           <span>{{ 'notifications.markAllRead' | translate }}</span>
         </button>
       </div>
 
       <div class="timeline-list">
-        @for (notification of notifications; track notification.id ?? 'ws-' + $index) {
-          <button type="button" class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
+        @for (notification of notifications; track notification.id) {
+          <div class="timeline-item" [class.unread]="!notification.isRead" (click)="onNotificationClick(notification)">
             <div class="notification-icon-wrapper" [attr.data-color]="notification.color">
-              <ion-icon [name]="notification.icon" aria-hidden="true"></ion-icon>
+              <ion-icon [name]="notification.icon"></ion-icon>
             </div>
             <div class="notification-body">
               <div class="notification-header-row">
@@ -32,25 +32,24 @@
                 <div class="notification-sender">{{ 'notifications.sentBy' | translate:{ name: notification.senderName } }}</div>
               }
               @if (notification.actionLabel && notification.objectModel) {
-                <!-- Rendered as a span, not a button: the whole row is now the
-                     button and nesting buttons is invalid HTML. It triggered
-                     the same onNotificationClick as the row anyway. -->
                 <div class="notification-action">
-                  <span class="action-btn">{{ notification.actionLabel }}</span>
+                  <button class="action-btn" (click)="onNotificationClick(notification); $event.stopPropagation()">
+                    {{ notification.actionLabel }}
+                  </button>
                 </div>
               }
             </div>
             @if (!notification.isRead) {
               <div class="unread-dot"></div>
             }
-          </button>
+          </div>
         }
       </div>
     }
 
     @if (notifications.length === 0) {
       <div class="empty-state">
-        <ion-icon name="notifications-off-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+        <ion-icon name="notifications-off-outline" class="empty-icon"></ion-icon>
         <h2 class="empty-title">{{ 'notifications.noNotifications' | translate }}</h2>
         <p class="empty-subtitle">{{ 'notifications.noNotificationsYet' | translate }}</p>
       </div>

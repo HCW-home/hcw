@@ -14,7 +14,6 @@ import { Subject, takeUntil, switchMap, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { TermsService } from '../../core/services/terms.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { ITerm } from '../../core/models/user.model';
 
 @Component({
@@ -39,8 +38,7 @@ export class TermsPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private termsService: TermsService,
     private navCtrl: NavController,
-    private toastController: ToastController,
-    private actionHandler: ActionHandlerService
+    private toastController: ToastController
   ) {}
 
   ngOnInit(): void {
@@ -107,12 +105,7 @@ export class TermsPage implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          // The link that started the login is replayed here: a gate crossed on
-          // the way in turned its navigation back, and the action waited for
-          // this page to clear.
-          if (!this.actionHandler.runPendingAction()) {
-            this.navCtrl.navigateRoot('/home');
-          }
+          this.navCtrl.navigateRoot('/home');
         },
         error: async () => {
           this.accepting = false;

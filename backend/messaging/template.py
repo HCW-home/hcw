@@ -1,11 +1,6 @@
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-# The call-to-action that asks a participant to answer whether they will
-# attend. Named because ``disable_presence_confirmation`` switches exactly
-# these templates' button off.
-PRESENCE_ACTION = "presence"
-
 DEFAULT_NOTIFICATION_MESSAGES = {
     "appointment_first_reminder": {
         "template_subject": _(
@@ -44,46 +39,10 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """<p>Your consultation has been successfully scheduled.</p>"""
             """<p>Appointment is scheduled for <strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong> ({{ obj.appointment.scheduled_at }})</p>"""
         ),
-        "action": PRESENCE_ACTION,
+        "action": "presence",
         "action_label": _("Confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant with invitation to join a consultation at a later time",
-    },
-    "patient_access_confirmation": {
-        "template_subject": _("A practitioner would like to access your record"),
-        "template_content": _(
-            """{{ obj.requested_by.name }}{% if obj.organisation %} from {{ obj.organisation.name }}{% endif %} would like to access your record. If you agree, follow the link below to confirm."""
-        ),
-        "template_content_html": _(
-            """<p><strong>{{ obj.requested_by.name }}</strong>{% if obj.organisation %} from <strong>{{ obj.organisation.name }}</strong>{% endif %} would like to access your record.</p>"""
-            """<p>If you agree, follow the link below to confirm.</p>"""
-        ),
-        "action": "confirmVisibility",
-        "action_label": _("Confirm access"),
-        "model": "users.PatientVisibilityGrant",
-        "helper_text": "Message sent to a patient asking them to confirm sharing their record with another organisation or practitioner",
-    },
-    "patient_access_granted_notification": {
-        "template_subject": _("A practitioner has accessed your record"),
-        "template_content": _(
-            """{{ obj.requested_by.name }}{% if obj.organisation %} from {{ obj.organisation.name }}{% endif %} has accessed your record."""
-        ),
-        "template_content_html": _(
-            """<p><strong>{{ obj.requested_by.name }}</strong>{% if obj.organisation %} from <strong>{{ obj.organisation.name }}</strong>{% endif %} has accessed your record.</p>"""
-        ),
-        "model": "users.PatientVisibilityGrant",
-        "helper_text": "Message sent to a patient informing them that a practitioner or organisation has accessed their record without requiring confirmation",
-    },
-    "patient_access_confirmed_notification": {
-        "template_subject": _("Your patient has confirmed access"),
-        "template_content": _(
-            """{{ obj.patient.first_name }} {{ obj.patient.last_name }} has confirmed sharing their record{% if obj.organisation %} with {{ obj.organisation.name }}{% endif %}."""
-        ),
-        "template_content_html": _(
-            """<p><strong>{{ obj.patient.first_name }} {{ obj.patient.last_name }}</strong> has confirmed sharing their record{% if obj.organisation %} with <strong>{{ obj.organisation.name }}</strong>{% endif %}.</p>"""
-        ),
-        "model": "users.PatientVisibilityGrant",
-        "helper_text": "Message sent to the requesting practitioner when the patient confirms sharing their record",
     },
     "invitation_to_ongoing_appointment": {
         "template_subject": _("A consultation is in progress - you are invited"),
@@ -123,7 +82,7 @@ DEFAULT_NOTIFICATION_MESSAGES = {
             """at <strong>{{ obj.appointment.previous_scheduled_at|localtime|time }}</strong> is now scheduled for """
             """<strong>{{ obj.appointment.scheduled_at|localtime|date }}</strong> at <strong>{{ obj.appointment.scheduled_at|localtime|time }}</strong></p>"""
         ),
-        "action": PRESENCE_ACTION,
+        "action": "presence",
         "action_label": _("Confirm your presence"),
         "model": "consultations.Participant",
         "helper_text": "Message sent to participant when appointment date and time is updated",
@@ -141,20 +100,17 @@ DEFAULT_NOTIFICATION_MESSAGES = {
     },
     "new_message_notification": {
         "template_subject": _("New message in consultation"),
-        # Opens and closes on static text: a WhatsApp template body may neither
-        # start nor end with a variable, and Meta validates every language
-        # separately. The message itself is left out on purpose: email, SMS
-        # and push providers sit outside the platform, so a notification only
-        # says that a message is waiting there.
+        # Opens on static text: a WhatsApp template body may not start with a
+        # variable, and Meta validates every language separately.
         "template_content": _(
             "New message from {{ obj.created_by.name }} "
-            'in consultation "{{ obj.consultation.title }}". '
-            "Open the consultation to read it."
+            'in consultation "{{ obj.consultation.title }}": '
+            "{{ obj.content }}"
         ),
         "template_content_html": _(
             "<p>New message from {{ obj.created_by.name }} "
-            'in consultation "{{ obj.consultation.title }}".</p>'
-            "<p>Open the consultation to read it.</p>"
+            'in consultation "{{ obj.consultation.title }}":</p>'
+            "<p>{{ obj.content }}</p>"
         ),
         "action": "message",
         "model": "consultations.Message",
@@ -162,27 +118,15 @@ DEFAULT_NOTIFICATION_MESSAGES = {
         "action_label": _("Click here to answer"),
     },
     "email_verification": {
-        # Conditional rather than a flat wording: the identifier may be a phone
-        # number now, and a subject overridden in the database would not be
-        # touched by a change to the default anyway.
-        "template_subject": _(
-            "{% if obj.email %}Verify your email address"
-            "{% else %}Verify your phone number{% endif %}"
-        ),
-        # No "action" on purpose: the recipient types the code back into the
-        # app instead of following a link. Leaving one out also keeps
-        # Message.access_link from minting a one_time_auth_token, which would
-        # reopen the grace period this flow deliberately closes.
-        "template_content": _(
-            "To finish creating your account, please use this verification "
-            "code: {{ obj.verification_code }}"
-        ),
+        "template_subject": _("Verify your email address"),
+        "template_content": _("We are requiring to verify your email address."),
         "template_content_html": _(
-            "<p>To finish creating your account, please use this verification "
-            "code: <strong>{{ obj.verification_code }}</strong></p>"
+            "<p>We are requiring to verify your email address.</p>"
         ),
         "model": "users.User",
-        "helper_text": "Message sent to user containing the code to verify their email address or phone number after registration",
+        "helper_text": "Message sent to user to verify their email address after registration",
+        "action": "verify-email",
+        "action_label": _("Verify my email"),
     },
     "reset_password": {
         "template_subject": _("Reset your password"),

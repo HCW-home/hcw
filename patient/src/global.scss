@@ -81,23 +81,6 @@
   box-sizing: border-box;
 }
 
-/* On-screen keyboard
- * ---------------------------------------------------------------------------
- * KeyboardService measures the band of the viewport the keyboard covers and
- * publishes it here. It stays 0 whenever the platform resizes the web view on
- * its own (Android adjustResize, iOS native resize) and only becomes non-zero
- * where the keyboard simply overlays the page: Android 15 edge-to-edge, mobile
- * browsers and PWAs. Padding the page instead of the individual layouts makes
- * every screen — chat, forms, wizards — shrink above the keyboard the same way
- * a natively resized web view would. */
-:root {
-  --app-keyboard-height: 0px;
-}
-
-.ion-page {
-  padding-bottom: var(--app-keyboard-height);
-}
-
 body {
   font-family: var(--ion-font-family), serif;
   background-color: var(--app-background);
@@ -127,25 +110,20 @@ body {
     margin: 0 auto;
   }
 
-  /* Full-width pages: no framed container / shadow. Auth and first-login, video
-     call, plus the patient dashboard and the whole booking funnel — search,
-     practitioner profile and the request wizard (design: full-width nav bar,
-     content centered on the page background — no visible card-like container;
-     the search needs the room for its results + map split view).
-
-     These are element selectors, so a page renamed without touching this list
-     silently falls back to the framed container. Keep them in step with the
-     `selector:` of each page component. */
+  /* Full-width pages: no framed container / shadow. Auth + video call, plus the
+     patient dashboard and the whole booking funnel — search, practitioner
+     profile and the request wizard (design: full-width nav bar, content
+     centered on the page background — no visible card-like container; the
+     search needs the room for its results + map split view). */
   ion-app:has(app-login),
   ion-app:has(app-register),
-  ion-app:has(app-verify-account),
-  ion-app:has(app-verify-invite),
-  ion-app:has(app-onboarding),
+  ion-app:has(app-verify-email),
   ion-app:has(app-forgot-password),
   ion-app:has(app-reset-password),
   ion-app:has(app-video-consultation),
   ion-app:has(app-home),
   ion-app:has(app-map),
+  ion-app:has(app-practitioner-profile),
   ion-app:has(app-new-request),
   ion-app:has(app-notifications),
   ion-app:has(app-profile) {
@@ -156,12 +134,14 @@ body {
 
   /* On the dashboard the nav bar and footer span the full viewport width; the
      page content is centered by the page itself (home .main-content max-width,
-     map .map-layout max-width,
+     map .map-layout max-width, profile .profile-container max-width,
      new-request .main-content max-width). */
   ion-app:has(app-home) ion-header ion-toolbar,
   ion-app:has(app-home) ion-footer,
   ion-app:has(app-map) ion-header ion-toolbar,
   ion-app:has(app-map) ion-footer,
+  ion-app:has(app-practitioner-profile) ion-header ion-toolbar,
+  ion-app:has(app-practitioner-profile) ion-footer,
   ion-app:has(app-new-request) ion-header ion-toolbar,
   ion-app:has(app-new-request) ion-footer,
   ion-app:has(app-notifications) ion-header ion-toolbar,
@@ -382,213 +362,3 @@ ion-alert.ios {
 .font-medium { font-weight: var(--app-font-weight-medium) !important; }
 .font-semibold { font-weight: var(--app-font-weight-semibold) !important; }
 .font-bold { font-weight: var(--app-font-weight-bold) !important; }
-
-// Square back button shown inside the page content (wizard, public sheets)
-// instead of the toolbar, so the branded header stays identical everywhere.
-.page-back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  padding: 0;
-  border: 1px solid var(--app-border);
-  border-radius: 9px;
-  background: var(--app-surface);
-  color: var(--app-ink-2);
-  cursor: pointer;
-  transition: background 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
-
-  ion-icon {
-    font-size: 18px;
-  }
-
-  &:hover {
-    background: var(--app-surface-muted);
-    border-color: var(--app-teal);
-    color: var(--app-teal-dark);
-  }
-}
-
-/* ---------------------------------------------------------------------------
- * Accessibility primitives
- * ---------------------------------------------------------------------------
- * Shared building blocks for WCAG 2.1 AA conformance. Kept global because they
- * apply across every page and component.
- */
-
-/* Visible to assistive technology only. Not display:none and not
- * visibility:hidden — both of those drop the node from the accessibility tree,
- * which defeats the purpose. */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Keyboard focus indicator (WCAG 2.4.7).
- *
- * The ring colour is a fixed dark teal rather than var(--ion-color-primary):
- * the primary is overwritten at runtime from per-instance server config
- * (app.component.ts applyPrimaryColor), so deriving the ring from it would let
- * a light brand colour produce an invisible focus ring. */
-:root {
-  --app-focus-ring: #0b4f5f;
-}
-
-:focus-visible {
-  outline: 3px solid var(--app-focus-ring);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-/* Mouse and touch activation must not paint the ring. */
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* Ionic components hide their internals behind shadow roots, so the global
- * rule above never reaches the real focusable node. Targeting the host makes
- * the browser draw the ring around the component itself. */
-ion-button:focus-visible,
-ion-select:focus-visible,
-ion-checkbox:focus-visible,
-ion-toggle:focus-visible,
-ion-radio:focus-visible,
-ion-card[button]:focus-visible {
-  outline: 3px solid var(--app-focus-ring);
-  outline-offset: 2px;
-}
-
-/* Buttons that are styled to read as inline text links. Used wherever a click
- * handler used to sit on a non-focusable <ion-text>; the element is now a real
- * <button> so it is reachable by keyboard, and this strips the native chrome
- * so the appearance is unchanged. */
-/* :where() keeps this at zero specificity so per-component .link-text rules
- * (font-size, font-weight, colour) still win without needing !important. */
-:where(button.link-text) {
-  background: none;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  color: var(--ion-color-primary);
-  cursor: pointer;
-  text-align: inherit;
-}
-
-button.link-text:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-/* Field labels sitting above their control, outside the filled container.
- *
- * Ionic's own label placements all render inside the input box: "floating"
- * animates the label up into the field once text is entered, and "stacked"
- * stacks it inside the same rounded surface. Both put the label within the
- * grey card, which reads as cramped. A plain <label for> above the ion-item
- * keeps the box for input alone, and gives an explicit for/id association
- * rather than relying on Ionic's internal wiring. */
-.field-label {
-  display: block;
-  margin: 0 0 6px 4px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--app-text-secondary);
-}
-
-/* Validation messages, rendered below the field rather than inside it.
- *
- * ion-input's own errorText paints the message within the filled container,
- * which crowds the box and pushes the input around as messages appear and
- * disappear. Rendering it ourselves keeps the box a fixed size and the message
- * clearly attached underneath. role="alert" and aria-describedby are set in
- * the templates, so screen readers still get what Ionic used to provide. */
-.field-error {
-  display: block;
-  margin: -8px 0 12px 4px;
-  font-size: 0.75rem;
-  color: var(--ion-color-danger);
-}
-
-/* Floating and stacked labels on fields that already sit inside a styled
- * container.
- *
- * Material draws its own underline plus a coloured highlight beneath the
- * label. Every form in this app wraps its inputs in a rounded, filled
- * ion-item, so that underline renders as a stray second border across the
- * field. Dropped here rather than per page, since all seven forms share it. */
-ion-item ion-input,
-ion-item ion-textarea {
-  --highlight-height: 0;
-}
-
-/* Ionic tints a control via --highlight-color-invalid as soon as it is touched
- * and invalid — and an empty required field is invalid the moment it is
- * focused and left, before anything has been typed. The components suppress
- * the message in that case (their *ErrorText getters return '' when the only
- * error is `required` on an empty value), so the tint has to go too, otherwise
- * the field turns red with nothing to explain why.
- *
- * Reset --highlight-color rather than --highlight-color-invalid: Ionic also
- * paints the text caret with it (`.has-focus input { caret-color:
- * var(--highlight-color) }`), so pointing the invalid colour at the border
- * grey made the caret vanish against the field background the moment the last
- * character was deleted — it only came back once typing made the field valid
- * again. The focused colour is what the field uses before it is ever touched,
- * so the caret now stays the same throughout.
- *
- * .has-error is bound from the component whenever a message is genuinely
- * shown, so real validation failures still turn red. */
-ion-input.ion-invalid.ion-touched:not(.has-error),
-ion-textarea.ion-invalid.ion-touched:not(.has-error) {
-  --highlight-color: var(--highlight-color-focused);
-}
-
-/* Password reveal toggles. Formerly bare clickable <ion-icon>s, now real
- * buttons; stripped back so they look exactly as before. */
-:where(button.password-toggle) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  color: var(--app-input-placeholder);
-
-  ion-icon {
-    font-size: 20px;
-    pointer-events: none;
-  }
-}
-
-/* Skip link — first tab stop on every page, hidden until focused (WCAG 2.4.1).
- * Named .a11y-skip-link, not .skip-link: confirm-presence already uses that
- * class for an unrelated "skip this step" business link. */
-.a11y-skip-link {
-  position: absolute;
-  top: -100px;
-  inset-inline-start: 8px;
-  z-index: 10000;
-  padding: 12px 20px;
-  border-radius: 0 0 8px 8px;
-  background: var(--app-focus-ring);
-  color: #ffffff;
-  font-weight: 600;
-  text-decoration: none;
-  transition: top 0.15s var(--app-ease);
-
-  &:focus {
-    top: 0;
-  }
-}

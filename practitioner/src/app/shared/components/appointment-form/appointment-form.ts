@@ -621,13 +621,12 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
       }
       if (pending.user_id) {
         participants_ids.push(pending.user_id);
-        // Always state the box's value, ticked or not: the server treats an
-        // explicit false as a decision and takes a previously granted access
-        // away, which is what re-adding someone unticked is asking for.
-        participants_visibility.push({
-          user_id: pending.user_id,
-          is_consultation_visible: !!pending.is_consultation_visible,
-        });
+        if (pending.is_consultation_visible) {
+          participants_visibility.push({
+            user_id: pending.user_id,
+            is_consultation_visible: true,
+          });
+        }
       } else {
         const tempParticipant: ITemporaryParticipant = {};
         if (pending.first_name) {
@@ -651,8 +650,9 @@ export class AppointmentForm implements OnInit, OnDestroy, OnChanges {
         if (pending.preferred_language) {
           tempParticipant.preferred_language = pending.preferred_language;
         }
-        tempParticipant.is_consultation_visible =
-          !!pending.is_consultation_visible;
+        if (pending.is_consultation_visible) {
+          tempParticipant.is_consultation_visible = true;
+        }
         temporary_participants.push(tempParticipant);
       }
     }

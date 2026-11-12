@@ -188,22 +188,6 @@
             }
           </div>
 
-          @if (backgroundBlurSupported) {
-            <button
-              class="control-button"
-              [class.active]="isBackgroundBlurEnabled"
-              [class.loading]="isTogglingBackgroundBlur"
-              [disabled]="!isCameraEnabled || isTogglingBackgroundBlur"
-              (click)="toggleBackgroundBlur()">
-              @if (isTogglingBackgroundBlur) {
-                <span class="control-spinner"></span>
-              } @else {
-                <app-svg src="blur" [svgStyle]="{'width.px': 18, 'height.px': 18}"></app-svg>
-              }
-              <span class="control-label">{{ 'videoConsultation.backgroundBlur' | translate }}</span>
-            </button>
-          }
-
           <!-- Screen share -->
           <button
             class="control-button"
@@ -262,9 +246,7 @@
             </button>
           }
 
-          <!-- No follow-up in reach means no conversation to open: the chat
-               would only load a consultation the server refuses. -->
-          @if (!isMinimized && consultationId) {
+          @if (!isMinimized) {
             <!-- Chat -->
             <button
               class="control-button chat-control"
@@ -298,7 +280,7 @@
         </div>
       </div>
 
-      @if (showChat() && !isMinimized && consultationId) {
+      @if (showChat() && !isMinimized) {
         <div class="chat-panel">
           <app-message-list
             [messages]="messages"

@@ -8,7 +8,6 @@
     "cancel": "إلغاء",
     "remove": "إزالة",
     "close": "إغلاق",
-    "clear": "مسح",
     "back": "رجوع",
     "save": "حفظ",
     "error": "خطأ",
@@ -27,18 +26,15 @@
     "appNeedsReload": "يجب إعادة تحميل التطبيق للمتابعة",
     "reload": "إعادة التحميل",
     "offline": "انقطع الاتصال بالخادم",
-    "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال...",
-    "required": "مطلوب",
-    "language": "اللغة",
-    "skipToContent": "تخطي إلى المحتوى الرئيسي",
-    "previous": "السابق",
-    "next": "التالي"
+    "reconnecting": "انقطع الاتصال بالخادم. جارٍ إعادة الاتصال..."
   },
   "login": {
     "title": "تسجيل الدخول",
     "subtitle": "سجّل الدخول إلى حسابك",
     "platformDescription": "منصتك الآمنة للطب عن بُعد لإجراء الاستشارات مع مقدم الرعاية الصحية الخاص بك.",
+    "emailPlaceholder": "البريد الإلكتروني",
     "passwordPlaceholder": "كلمة المرور",
+    "emailRequired": "يجب إدخال بريد إلكتروني صالح",
     "passwordMinLength": "يجب ألا تقل كلمة المرور عن 6 أحرف",
     "forgotPassword": "هل نسيت كلمة المرور؟",
     "noAccount": "ليس لديك حساب؟",
@@ -54,37 +50,31 @@
     "verifyCode": "تحقق من الرمز",
     "codeSentTo": "تم إرسال رمز التحقق إلى بريدك الإلكتروني.",
     "resendCode": "إعادة إرسال الرمز",
-    "resendCodeIn": "إعادة إرسال الرمز ({{seconds}} ث)",
-    "codeExpired": "انتهت صلاحية هذا الرمز. يرجى طلب رمز جديد.",
-    "tooManyRequests": "طلبات كثيرة جدًا. يرجى الانتظار قليلاً قبل طلب رمز جديد.",
     "didntReceiveCode": "لم تستلم الرمز؟",
     "backToEmail": "تغيير",
     "tooManyAttempts": "عدد المحاولات كبير جدًا. يرجى طلب رمز جديد.",
     "invalidVerificationCode": "رمز التحقق غير صالح.",
     "codeSent": "تم إرسال رمز التحقق.",
-    "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
-    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
-    "identifierRequired": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
-    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
-    "showPassword": "إظهار كلمة المرور",
-    "hidePassword": "إخفاء كلمة المرور",
-    "identifierLabel": "البريد الإلكتروني أو رقم الهاتف",
-    "passwordLabel": "كلمة المرور",
-    "verificationCodeLabel": "رمز التحقق"
+    "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
   },
   "register": {
     "platformDescription": "أنشئ حسابك وابدأ استشاراتك عن بُعد اليوم.",
     "title": "إنشاء حساب",
     "subtitle": "سجّل للبدء",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "firstNameRequired": "الاسم الأول مطلوب",
+    "emailPlaceholder": "البريد الإلكتروني",
+    "emailInvalid": "يرجى إدخال بريد إلكتروني صالح",
+    "passwordPlaceholder": "كلمة المرور",
+    "passwordMinLength": "يجب ألا تقل كلمة المرور عن 8 أحرف",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "passwordsMismatch": "كلمتا المرور غير متطابقتين",
     "registrationDisabled": "التسجيل معطّل حاليًا.",
     "hasAccount": "لديك حساب بالفعل؟",
     "creatingAccount": "جارٍ إنشاء الحساب...",
-    "registrationFailed": "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.",
-    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
-    "identifierHelp": "سنرسل لك رمزًا مكوّنًا من 6 أرقام للتأكيد.",
-    "identifierInvalid": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
-    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
-    "identifierLabel": "البريد الإلكتروني أو رقم الهاتف"
+    "verificationEmailSent": "تم إرسال رسالة تحقق إلى عنوان بريدك الإلكتروني.",
+    "registrationFailed": "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى."
   },
   "forgotPassword": {
     "title": "هل نسيت كلمة المرور؟",
@@ -114,6 +104,14 @@
     "linkExpired": "انتهت صلاحية رابط إعادة التعيين أو أنه غير صالح",
     "invalidResetLink": "رابط إعادة التعيين غير صالح"
   },
+  "verifyEmail": {
+    "title": "التحقق من البريد الإلكتروني",
+    "verifying": "جارٍ التحقق من عنوان بريدك الإلكتروني...",
+    "success": "تم التحقق من عنوان بريدك الإلكتروني بنجاح.",
+    "goToLogin": "الانتقال إلى تسجيل الدخول",
+    "invalidLink": "رابط التحقق غير صالح أو مفقود.",
+    "verificationFailed": "فشل التحقق من البريد الإلكتروني. قد يكون الرابط غير صالح أو منتهي الصلاحية."
+  },
   "verifyInvite": {
     "verifyingCode": "جارٍ التحقق من الرمز...",
     "authenticating": "جارٍ المصادقة...",
@@ -128,9 +126,6 @@
     "didntReceive": "لم تستلم الرمز؟",
     "sending": "جارٍ الإرسال...",
     "resendCode": "إعادة إرسال الرمز",
-    "resendCodeIn": "إعادة إرسال الرمز ({{seconds}} ث)",
-    "codeExpired": "انتهت صلاحية هذا الرمز. يرجى طلب رمز جديد.",
-    "tooManyRequests": "طلبات كثيرة جدًا. يرجى الانتظار قليلاً قبل طلب رمز جديد.",
     "havingTrouble": "هل تواجه مشكلة؟",
     "signInManually": "تسجيل الدخول يدويًا",
     "noAuthToken": "لم يتم تقديم رمز مصادقة",
@@ -180,8 +175,7 @@
     "appointmentNotFound": "لم يتم العثور على الموعد",
     "failedToLoadParticipant": "تعذّر تحميل معلومات المشارك",
     "statusCompleted": "مكتمل",
-    "statusNoshow": "لم يحضر",
-    "title": "الرئيسية"
+    "statusNoshow": "لم يحضر"
   },
   "newRequest": {
     "selectSpecialty": "اختر التخصص",
@@ -238,10 +232,7 @@
     "cancelConfirmTitle": "إلغاء هذا الطلب؟",
     "cancelConfirmMessage": "ستفقد المعلومات التي أدخلتها.",
     "cancelConfirmStay": "متابعة الطلب",
-    "cancelConfirmLeave": "مغادرة",
-    "symptomLabel": "صف الأعراض التي تشعر بها",
-    "previousWeek": "الأسبوع السابق",
-    "nextWeek": "الأسبوع التالي"
+    "cancelConfirmLeave": "مغادرة"
   },
   "profile": {
     "changeServer": "تغيير الخادم",
@@ -296,8 +287,7 @@
     "encryptionPassphraseChanged": "تم تحديث عبارة المرور",
     "encryptionInvalidOldPassphrase": "عبارة المرور الحالية غير صحيحة",
     "encryptionNewPassphraseTitle": "تم توليد عبارة مرور جديدة",
-    "encryptionNewPassphraseMessage": "احفظ عبارة المرور هذه الآن — لن تُعرض إلا مرة واحدة.",
-    "changePhoto": "تغيير صورة الملف الشخصي"
+    "encryptionNewPassphraseMessage": "احفظ عبارة المرور هذه الآن — لن تُعرض إلا مرة واحدة."
   },
   "onboarding": {
     "title": "مرحبًا بك!",
@@ -313,15 +303,7 @@
     "encryptionNewPassphrase": "عبارة المرور الجديدة",
     "encryptionInvalidPassphrase": "عبارة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
     "save": "حفظ ومتابعة",
-    "errorMessage": "تعذّر حفظ تفضيلاتك. يرجى المحاولة مرة أخرى.",
-    "firstName": "الاسم الأول",
-    "lastName": "اسم العائلة",
-    "email": "البريد الإلكتروني",
-    "password": "كلمة المرور",
-    "passwordConfirm": "تأكيد كلمة المرور",
-    "passwordOptional": "اختياري. يمكنك دائمًا تسجيل الدخول برمز.",
-    "passwordsMismatch": "كلمتا المرور غير متطابقتين",
-    "passwordRejected": "تم رفض كلمة المرور هذه. جرّب واحدة أطول."
+    "errorMessage": "تعذّر حفظ تفضيلاتك. يرجى المحاولة مرة أخرى."
   },
   "activateEncryption": {
     "title": "تفعيل التشفير",
@@ -349,14 +331,7 @@
     "typePlaceholder": "اكتب رسالة...",
     "today": "اليوم",
     "yesterday": "أمس",
-    "unreadMessages": "رسائل غير مقروءة",
-    "openImage": "فتح الصورة {{name}}",
-    "downloadAttachment": "تنزيل {{name}}",
-    "editMessage": "تعديل الرسالة",
-    "deleteMessage": "حذف الرسالة",
-    "removeFile": "إزالة الملف",
-    "attachFile": "إرفاق ملف",
-    "send": "إرسال الرسالة"
+    "unreadMessages": "رسائل غير مقروءة"
   },
   "preJoinLobby": {
     "settingUp": "جارٍ إعداد أجهزتك...",
@@ -526,8 +501,6 @@
     "connectedToConsultation": "تم الاتصال بالاستشارة",
     "failedJoin": "تعذّر الانضمام إلى مكالمة الفيديو",
     "failedToggleCamera": "تعذّر تبديل حالة الكاميرا",
-    "backgroundBlur": "تمويه الخلفية",
-    "failedToggleBackgroundBlur": "تعذّر تغيير تمويه الخلفية",
     "failedToggleMic": "تعذّر تبديل حالة الميكروفون",
     "failedToggleScreen": "تعذّر تبديل مشاركة الشاشة",
     "switchingCamera": "جارٍ تبديل الكاميرا...",
@@ -543,18 +516,7 @@
     "messageUpdated": "تم تحديث الرسالة",
     "failedUpdate": "تعذّر تحديث الرسالة",
     "messageDeleted": "تم حذف الرسالة",
-    "failedDelete": "تعذّر حذف الرسالة",
-    "microphone": "الميكروفون",
-    "camera": "الكاميرا",
-    "endCall": "إنهاء المكالمة",
-    "screenShare": "مشاركة الشاشة",
-    "switchCamera": "تبديل الكاميرا",
-    "chatWithUnread": "المحادثة، {{count}} رسائل غير مقروءة",
-    "micMuted": "الميكروفون مكتوم",
-    "cameraOff": "الكاميرا مغلقة",
-    "participantJoined": "انضم {{name}} إلى الاستشارة",
-    "participantLeft": "غادر {{name}} الاستشارة",
-    "title": "استشارة بالفيديو"
+    "failedDelete": "تعذّر حذف الرسالة"
   },
   "videoCall": {
     "leaveCallTitle": "مغادرة مكالمة الفيديو؟",
@@ -580,8 +542,8 @@
     "resultsTitle": "النتائج",
     "typeDoctor": "ممارس",
     "typeOrganisation": "منشأة",
+    "noSlots": "لا توجد مواعيد متاحة",
     "bookButton": "حجز موعد",
-    "detailsButton": "التفاصيل",
     "suggestSpecialities": "التخصصات",
     "suggestPractitioners": "الممارسون",
     "suggestOrganisations": "المنشآت",
@@ -627,29 +589,9 @@
   },
   "practitioner": {
     "notFound": "لم يتم العثور على الممارس",
-    "backToResults": "العودة إلى النتائج",
     "organisation": "المؤسسة",
     "additionalInfo": "معلومات إضافية",
     "contact": "التواصل",
     "profile": "الملف الشخصي"
-  },
-  "verifyAccount": {
-    "title": "أكّد حسابك",
-    "identifierPlaceholder": "البريد الإلكتروني أو رقم الهاتف",
-    "invalidIdentifier": "أدخل بريدًا إلكترونيًا أو رقم هاتف صالحًا",
-    "phoneNeedsCountryCode": "أضف رمز بلدك، على سبيل المثال ‎+966612345678",
-    "codeSentTo": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه للتو.",
-    "enterCode": "أدخل الرمز المكوّن من 6 أرقام",
-    "invalidCode": "رمز غير صالح أو منتهي الصلاحية.",
-    "invalidCodeFormat": "يرجى إدخال رمز صالح مكوّن من 6 أرقام",
-    "verifyCode": "تأكيد",
-    "didntReceiveCode": "لم تستلم الرمز؟",
-    "resendCode": "إعادة إرسال الرمز",
-    "resendCodeIn": "إعادة إرسال الرمز ({{seconds}} ث)",
-    "tooManyRequests": "طلبات كثيرة جدًا. يرجى الانتظار قليلاً قبل طلب رمز جديد.",
-    "sendingCode": "جارٍ الإرسال...",
-    "codeSent": "تم إرسال الرمز.",
-    "sendFailed": "تعذّر إرسال الرمز. يرجى المحاولة مرة أخرى.",
-    "backToLogin": "العودة إلى تسجيل الدخول"
   }
 }

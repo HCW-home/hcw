@@ -1,3 +1,5 @@
+from allauth.account import app_settings
+from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from allauth.socialaccount.models import EmailAddress
 from constance import config as constance_config
@@ -7,12 +9,12 @@ from dj_rest_auth.serializers import PasswordResetSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
 from rest_framework.response import Response
 
 from .forms import CustomAllAuthPasswordResetForm
 from .models import HealthMetric, Language, Organisation, Speciality, Term, WebPushSubscription, DAVAppPassword
-from .permissions import check_contact_changes
 from .phone import MAX_PHONE_LENGTH, phone_lookup_variants
 from .validators import validate_phone_number
 
@@ -71,7 +73,6 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
     organisations = OrganisationSerializer(many=True, read_only=True)
     languages = LanguageSerializer(many=True, read_only=True)
     specialities = SpecialitySerializer(many=True, read_only=True)
-    preferred_language_name = serializers.SerializerMethodField()
 
     is_online = serializers.BooleanField(read_only=True)
     mobile_phone_number = serializers.CharField(
@@ -115,7 +116,6 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "main_organisation",
             "organisations",
             "preferred_language",
-            "preferred_language_name",
             "languages_ids",
             "languages",
             "is_online",
@@ -133,14 +133,12 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             "encryption_key_lost",
         ]
         read_only_fields = [
-            "last_login",
             "is_practitioner",
             "public_key",
             "public_key_fingerprint",
             "encrypted_private_key",
             "encryption_passphrase_pending",
             "encryption_key_lost",
-            "preferred_language_name",
         ]
 
     def get_encrypted_private_key(self, obj):
@@ -152,12 +150,6 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         ):
             return None
         return obj.encrypted_private_key or None
-
-    def get_preferred_language_name(self, obj):
-        if obj.preferred_language:
-            lang_dict = dict(settings.LANGUAGES)
-            return lang_dict.get(obj.preferred_language, obj.preferred_language)
-        return None
 
     def _custom_field_target(self, instance):
         """Custom fields are scoped to the user role: practitioner vs patient."""
@@ -254,21 +246,6 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
             )
         return value
 
-    def update(self, instance, validated_data):
-        """Drop the verified flag when the address itself changes.
-
-        Otherwise an account could be moved onto someone else's address and
-        stay marked as verified, which the sign-up flow reads as proof that
-        this person controls it. Re-verifying is a code away.
-        """
-        new_email = validated_data.get("email")
-        if (
-            "email" in validated_data
-            and (instance.email or "").lower() != (new_email or "").strip().lower()
-        ):
-            instance.email_verified = False
-        return super().update(instance, validated_data)
-
     def validate_email(self, value):
         # Uniqueness is checked case-insensitively: the model's unique index is
         # case-sensitive in PostgreSQL but every lookup in the application is
@@ -353,103 +330,57 @@ class UserDetailsSerializer(CustomFieldsMixin, serializers.ModelSerializer):
         return attrs
 
 
-class ManagedUserSerializer(UserDetailsSerializer):
-    """Somebody else's account, as a practitioner edits it.
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        required=app_settings.SIGNUP_FIELDS["email"]["required"]
+    )
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    password1 = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
 
-    Serves /api/users/, /api/patients/ and /api/practitioners/. One's own
-    profile goes through /api/auth/user/ and UserDetailsSerializer instead.
-    The onboarding flag belongs to the owner, and so do the contact details
-    once they have claimed the account.
-    """
-
-    class Meta(UserDetailsSerializer.Meta):
-        read_only_fields = UserDetailsSerializer.Meta.read_only_fields + [
-            "is_first_login",
-        ]
+    def validate_email(self, email):
+        email = get_adapter().clean_email(email)
+        return email
 
     def validate(self, attrs):
-        attrs = super().validate(attrs)
-        if self.instance is not None:
-            check_contact_changes(self.instance, attrs)
+        if attrs.get("password1") != attrs.get("password2"):
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
         return attrs
 
-
-def sms_channel_available():
-    """Whether a provider can actually deliver a code by SMS or WhatsApp.
-
-    Without one, a phone-only sign-up would create an account nobody can reach:
-    ``messaging.tasks.send_message`` just marks the message failed, and the
-    account stays inactive for good.
-    """
-    from messaging.models import CommunicationMethod, MessagingProvider
-
-    return MessagingProvider.objects.filter(
-        is_active=True,
-        communication_method__in=[
-            CommunicationMethod.sms,
-            CommunicationMethod.whatsapp,
-        ],
-    ).exists()
-
-
-class RegisterSerializer(serializers.Serializer):
-    """Sign-up from a single field: an email address or a phone number.
-
-    Neither name nor password is collected here. The account is claimed by
-    typing back the code we send, and the profile is filled in during
-    onboarding — where a password is only offered when the instance actually
-    allows patients to sign in with one.
-    """
-
-    identifier = serializers.CharField()
-
-    def validate_identifier(self, value):
-        from .identifier import PHONE, resolve_identifier
-
-        kind, normalized = resolve_identifier(value)
-        if kind == PHONE and not sms_channel_available():
-            raise serializers.ValidationError(
-                _("This instance cannot send text messages. Use an email address.")
-            )
-        return normalized
+    def get_cleaned_data(self):
+        return {
+            "password": self.validated_data.get("password1", ""),
+            "email": self.validated_data.get("email", ""),
+            "first_name": self.validated_data.get("first_name", ""),
+            "last_name": self.validated_data.get("last_name", ""),
+        }
 
     def save(self, request):
-        from messaging.models import CommunicationMethod
+        self.cleaned_data = self.get_cleaned_data()
+        email = self.cleaned_data.get("email", "")
 
-        from .identifier import EMAIL, resolve_identifier
+        # If user already exists, silently return existing user
+        # to avoid leaking information about registered emails
+        existing_user = UserModel.objects.find_by_email(email)
+        if existing_user:
+            return existing_user
 
-        kind, value = resolve_identifier(self.validated_data["identifier"])
-
-        # An account already using this identifier is returned as-is, without
-        # a word: answering differently would turn sign-up into a way to test
-        # whether someone is a patient here. The caller sends a fresh code
-        # either way, so a legitimate owner simply reclaims their account.
-        if kind == EMAIL:
-            user, created = UserModel.objects.get_or_create_by_email(
-                value,
-                defaults={
-                    "is_active": False,
-                    "communication_method": CommunicationMethod.email,
-                },
-            )
-        else:
-            user, created = UserModel.objects.get_or_create_by_phone(
-                value,
-                defaults={
-                    "is_active": False,
-                    # Prefer SMS: no WhatsApp content is mapped for this
-                    # template, so that channel would fail over to SMS anyway
-                    # after a wasted round-trip.
-                    "communication_method": CommunicationMethod.sms,
-                },
-            )
-
-        if created:
-            user.set_unusable_password()
-            user.save(update_fields=["password"])
-            if kind == EMAIL:
-                setup_user_email(request, user, [])
-
+        adapter = get_adapter()
+        user = adapter.new_user(request)
+        user = adapter.save_user(request, user, self, commit=False)
+        if "password" in self.cleaned_data:
+            try:
+                adapter.clean_password(self.cleaned_data["password"], user=user)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(
+                    detail=serializers.as_serializer_error(exc)
+                )
+        user.first_name = self.cleaned_data.get("first_name", "")
+        user.last_name = self.cleaned_data.get("last_name", "")
+        user.is_active = False
+        user.save()
+        setup_user_email(request, user, [])
         return user
 
 

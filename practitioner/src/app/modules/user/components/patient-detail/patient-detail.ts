@@ -375,10 +375,6 @@ export class PatientDetail implements OnInit, OnDestroy {
         first_name: p.first_name,
         last_name: p.last_name,
         email: p.email,
-        // Same default as the box in the participant form, which is what this
-        // pre-filled row stands in for: the person the appointment is with
-        // takes part in its conversation.
-        is_consultation_visible: true,
       },
     ];
   }
@@ -582,9 +578,6 @@ export class PatientDetail implements OnInit, OnDestroy {
   getLanguageName(patient: IUser): string {
     if (patient.languages && patient.languages.length > 0) {
       return patient.languages.map(l => l.name).join(', ');
-    }
-    if (patient.preferred_language_name) {
-      return patient.preferred_language_name;
     }
     return '';
   }

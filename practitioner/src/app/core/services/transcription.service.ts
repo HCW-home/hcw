@@ -8,10 +8,8 @@ interface SessionState {
   audioContext: AudioContext;
   sourceNode: MediaStreamAudioSourceNode | null;
   workletNode: AudioWorkletNode | null;
-  /** Track transcribed — it belongs to the call, so it is never stopped here. */
-  track: MediaStreamTrack;
-  /** Set on stop, so that late callbacks neither report errors nor touch a successor. */
-  stopped: boolean;
+  /** Non-null only for the local mic session — tracks must be stopped on cleanup. */
+  ownedStream: MediaStream | null;
 }
 
 const LOCAL_KEY = '__local__';
@@ -29,22 +27,26 @@ export class TranscriptionService implements OnDestroy {
 
   constructor(private auth: Auth) {}
 
-  /**
-   * Start transcription for the local microphone, from the track published in the
-   * call so that it follows the device selected there. A no-op when that very
-   * track is already transcribed: the call re-emits its state on unrelated changes.
-   */
-  async start(appointmentId: number, language: string, track: MediaStreamTrack): Promise<void> {
-    if (this.sessions.get(LOCAL_KEY)?.track === track) return;
+  /** Start transcription for the local microphone. */
+  async start(appointmentId: number, language = 'en'): Promise<void> {
     this.stopSession(LOCAL_KEY);
     this.isConnecting$.next(true);
     this.error$.next('');
 
     try {
-      await this.createSession(LOCAL_KEY, track, appointmentId, language, null);
-      this.isConnected$.next(this.sessions.has(LOCAL_KEY));
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+
+      // Create & resume AudioContext here — still inside the user-gesture Promise chain
+      // (started by the CC button click).  Browsers suspend contexts created later in
+      // async WS callbacks.
+      const audioContext = new AudioContext();
+      await audioContext.resume();
+
+      await this.createSession(LOCAL_KEY, audioContext, stream, true, appointmentId, language, null);
+      this.isConnected$.next(true);
     } catch (err) {
-      this.error$.next('Failed to start transcription');
+      this.error$.next('Failed to access microphone');
+      this.isConnecting$.next(false);
       throw err;
     } finally {
       this.isConnecting$.next(false);
@@ -63,7 +65,13 @@ export class TranscriptionService implements OnDestroy {
     speakerLabel: string
   ): Promise<void> {
     this.stopSession(identity);
-    await this.createSession(identity, mediaStreamTrack, appointmentId, language, speakerLabel);
+    const stream = new MediaStream([mediaStreamTrack]);
+
+    // Create & resume AudioContext early — same user-gesture chain as start().
+    const audioContext = new AudioContext();
+    await audioContext.resume();
+
+    await this.createSession(identity, audioContext, stream, false, appointmentId, language, speakerLabel);
   }
 
   /** Stop transcription for a specific remote participant. */
@@ -80,35 +88,24 @@ export class TranscriptionService implements OnDestroy {
 
   private async createSession(
     key: string,
-    track: MediaStreamTrack,
+    audioContext: AudioContext,
+    stream: MediaStream,
+    ownsTracks: boolean,
     appointmentId: number,
     language: string,
     speakerLabel: string | null
   ): Promise<void> {
-    // Create & resume the AudioContext right away — still inside the user-gesture
-    // Promise chain when started by the CC button click. Browsers suspend contexts
-    // created later in async WS callbacks. The session is registered before the
-    // first await, so that a concurrent start or stop finds it.
-    const audioContext = new AudioContext();
+    const token = this.auth.getToken();
+    const wsUrl = `${environment.wsUrl}/appointment/${appointmentId}/transcription/?token=${token}`;
+
     const session: SessionState = {
       ws: null,
       audioContext,
       sourceNode: null,
       workletNode: null,
-      track,
-      stopped: false,
+      ownedStream: ownsTracks ? stream : null,
     };
     this.sessions.set(key, session);
-
-    await audioContext.resume().catch(err => {
-      if (session.stopped) return;
-      this.stopSession(key, session);
-      throw err;
-    });
-    if (session.stopped) return;
-
-    const token = this.auth.getToken();
-    const wsUrl = `${environment.wsUrl}/appointment/${appointmentId}/transcription/?token=${token}`;
 
     return new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(wsUrl);
@@ -125,7 +122,7 @@ export class TranscriptionService implements OnDestroy {
                 this.error$.next(errorMsg);
                 this.isConnected$.next(false);
               }
-              this.stopSession(key, session);
+              this.stopSession(key);
             }
           } catch {
             // ignore non-JSON messages
@@ -143,12 +140,8 @@ export class TranscriptionService implements OnDestroy {
         try {
           // AudioWorklet module — safe to load now that the context is running.
           await audioContext.audioWorklet.addModule('/audio-processor.js');
-          if (session.stopped) {
-            resolve();
-            return;
-          }
 
-          const sourceNode = audioContext.createMediaStreamSource(new MediaStream([track]));
+          const sourceNode = audioContext.createMediaStreamSource(stream);
           session.sourceNode = sourceNode;
 
           const workletNode = new AudioWorkletNode(audioContext, 'audio-processor');
@@ -161,39 +154,35 @@ export class TranscriptionService implements OnDestroy {
           };
 
           sourceNode.connect(workletNode);
-          // Route through a silent gain to keep the graph active without playing
-          // back audio that the call already handles (our own microphone included).
-          const silentGain = audioContext.createGain();
-          silentGain.gain.value = 0;
-          workletNode.connect(silentGain);
-          silentGain.connect(audioContext.destination);
+          if (ownsTracks) {
+            // Local mic: connect to destination (keeps context alive, standard path).
+            workletNode.connect(audioContext.destination);
+          } else {
+            // Remote track: route through a silent gain to keep the graph active
+            // without double-playing audio that LiveKit already routes to speakers.
+            const silentGain = audioContext.createGain();
+            silentGain.gain.value = 0;
+            workletNode.connect(silentGain);
+            silentGain.connect(audioContext.destination);
+          }
 
           resolve();
         } catch (err) {
-          if (session.stopped) {
-            resolve();
-            return;
-          }
           if (key === LOCAL_KEY) {
             this.error$.next('Failed to set up audio capture');
           }
-          this.stopSession(key, session);
+          this.stopSession(key);
           reject(err);
         }
       };
 
       ws.onerror = () => {
-        // Closing a socket that is still connecting fires an error too
-        if (session.stopped) {
-          resolve();
-          return;
-        }
         const msg = 'Connection to transcription server failed';
         if (key === LOCAL_KEY) {
           this.error$.next(msg);
           this.isConnected$.next(false);
         }
-        this.stopSession(key, session);
+        this.stopSession(key);
         reject(new Error(msg));
       };
 
@@ -206,11 +195,9 @@ export class TranscriptionService implements OnDestroy {
     });
   }
 
-  /** Stop the session under `key` — only if it still is `expected`, when given. */
-  private stopSession(key: string, expected?: SessionState): void {
+  private stopSession(key: string): void {
     const session = this.sessions.get(key);
-    if (!session || (expected && session !== expected)) return;
-    session.stopped = true;
+    if (!session) return;
 
     if (session.workletNode) {
       session.workletNode.port.onmessage = null;
@@ -218,6 +205,9 @@ export class TranscriptionService implements OnDestroy {
     }
     if (session.sourceNode) {
       session.sourceNode.disconnect();
+    }
+    if (session.ownedStream) {
+      session.ownedStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
     try {
       session.audioContext.close();

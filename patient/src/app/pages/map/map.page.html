@@ -1,4 +1,6 @@
-<ion-content id="main-content" role="main" class="map-content">
+<app-header [pageTitle]="'map.title' | translate"></app-header>
+
+<ion-content class="map-content">
   @if (isPublicEnabled() === null) {
     <div class="loading-container">
       <ion-spinner name="crescent"></ion-spinner>
@@ -6,7 +8,7 @@
   } @else if (!canViewMap()) {
     <div class="state-wrap">
       <div class="state-card">
-        <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger" aria-hidden="true"></ion-icon>
+        <ion-icon name="lock-closed-outline" class="state-icon state-icon--danger"></ion-icon>
         <h2 class="state-title">{{ 'map.disabled' | translate }}</h2>
         <p class="state-text">{{ 'map.disabledMessage' | translate }}</p>
       </div>
@@ -20,7 +22,7 @@
 
       <div class="hero-text">
         <span class="search-hero-eyebrow">
-          <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+          <ion-icon name="search-outline"></ion-icon>
           {{ 'map.title' | translate }}
         </span>
         <h1 class="search-hero-title">{{ 'map.searchTitle' | translate }}</h1>
@@ -28,10 +30,8 @@
       </div>
 
       <app-search-bar
-        [who]="initialWho()"
-        [where]="initialWhere()"
         (search)="onSearch($event)"
-        (practitionerSelected)="openDetails($event)"
+        (practitionerSelected)="goToProfile($event)"
       ></app-search-bar>
 
       @if (hasSearched()) {
@@ -42,25 +42,20 @@
             <span class="section-badge">{{ items().length }} {{ 'common.total' | translate }}</span>
           }
         </div>
-        <!-- Not a <label>: it wraps a button, not a form control, so the
-             association has to go through aria-labelledby instead. -->
-        <div class="online-toggle">
-          <span id="online-booking-label">{{ 'map.onlineBooking' | translate }}</span>
+        <label class="online-toggle">
+          <span>{{ 'map.onlineBooking' | translate }}</span>
           <button
             type="button"
             class="toggle-switch"
-            role="switch"
-            aria-labelledby="online-booking-label"
-            [attr.aria-checked]="onlineBookingOnly()"
             [class.active]="onlineBookingOnly()"
             (click)="setOnlineBookingOnly(!onlineBookingOnly())"
           >
-            <span class="toggle-knob" aria-hidden="true"></span>
+            <span class="toggle-knob"></span>
           </button>
-        </div>
+        </label>
       </div>
 
-      <div class="map-body" [class.map-body--detail]="detailPk() !== null">
+      <div class="map-body">
         <div class="list-panel">
           @if (isLoading()) {
             <div class="loading-container">
@@ -68,31 +63,18 @@
             </div>
           } @else if (items().length === 0) {
             <div class="empty-state">
-              <ion-icon name="business-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+              <ion-icon name="business-outline" class="empty-icon"></ion-icon>
               <p class="empty-text">{{ 'map.noResults' | translate }}</p>
             </div>
           } @else {
-            <!-- Picking a result hides the others and grows its own card to
-                 hold the full practitioner sheet, rather than swapping the
-                 panel for a new block. -->
             <div class="org-list">
               @for (item of items(); track item.id) {
-                @if (!detailPk() || isDetail(item)) {
-                  <app-search-result-card
-                    [item]="item"
-                    [selected]="isSelected(item)"
-                    [expanded]="isDetail(item)"
-                    [primaryAction]="isDetail(item) ? 'book' : 'details'"
-                    (itemClick)="onItemSelected($event)"
-                    (details)="openDetails($event)"
-                    (collapse)="closeDetails()"
-                    (book)="goToBooking($event)"
-                  >
-                    @if (isDetail(item)) {
-                      <app-practitioner-details [pk]="detailPk()!"></app-practitioner-details>
-                    }
-                  </app-search-result-card>
-                }
+                <app-search-result-card
+                  [item]="item"
+                  [selected]="isSelected(item)"
+                  (itemClick)="goToProfile($event)"
+                  (book)="goToBooking($event)"
+                ></app-search-result-card>
               }
             </div>
           }
@@ -102,7 +84,6 @@
           class="map-panel"
           [items]="items()"
           (markerSelected)="onMarkerSelected($event)"
-          (boundsChanged)="onBoundsChanged($event)"
         ></app-search-map>
       </div>
       }

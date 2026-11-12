@@ -6,17 +6,11 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from users.models import Organisation, User
-from users.tasks import (
-    geocoding_pause_remaining,
-    nominatim_headers,
-    nominatim_min_interval,
-    nominatim_url,
-    pause_geocoding,
-)
 
 logger = logging.getLogger(__name__)
 
-NOMINATIM_ATTEMPTS = 2
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_HEADERS = {"User-Agent": "HCW-Home/1.0"}
 
 
 class Command(BaseCommand):
@@ -105,20 +99,12 @@ class Command(BaseCommand):
             else:
                 failed += 1
 
-            # The tasks are rate limited by Celery; this command is not, so it
-            # holds itself to the same pace.
-            time.sleep(nominatim_min_interval())
+            time.sleep(1)
 
         self.stdout.write(
             f"  {name}: geocoded={geocoded}, cached={cached}, failed={failed}"
         )
         return geocoded
-
-    def _wait_out_pause(self):
-        remaining = geocoding_pause_remaining()
-        if remaining:
-            self.stdout.write(f"  Geocoding paused, waiting {remaining}s...")
-            time.sleep(remaining)
 
     def _build_address(self, obj):
         parts = [obj.street, obj.postal_code, obj.city, obj.country]
@@ -126,43 +112,21 @@ class Command(BaseCommand):
         return address or None
 
     def _nominatim_search(self, address):
-        # This command shares Nominatim's quota with the geocoding tasks, so it
-        # observes and feeds the same pause instead of working against them. A
-        # rate-limited address gets one more go once the pause is over, rather
-        # than being reported as a failure it never really had.
-        for attempt in range(NOMINATIM_ATTEMPTS):
-            self._wait_out_pause()
+        try:
+            resp = http_requests.get(
+                NOMINATIM_URL,
+                params={"q": address, "format": "json", "limit": 1},
+                headers=NOMINATIM_HEADERS,
+                timeout=10,
+            )
+            resp.raise_for_status()
+            results = resp.json()
+        except Exception as exc:
+            logger.warning(f"Nominatim request failed for '{address}': {exc}")
+            return None
 
-            try:
-                resp = http_requests.get(
-                    nominatim_url(),
-                    params={"q": address, "format": "json", "limit": 1},
-                    headers=nominatim_headers(),
-                    timeout=10,
-                )
-            except Exception as exc:
-                logger.warning(f"Nominatim request failed for '{address}': {exc}")
-                return None
+        if not results:
+            logger.info(f"No result for '{address}'")
+            return None
 
-            if resp.status_code == 429:
-                pause = pause_geocoding(resp.headers.get("Retry-After"))
-                self.stdout.write(self.style.WARNING(
-                    f"  Nominatim rate limit reached, pausing for {pause}s"
-                ))
-                continue
-
-            try:
-                resp.raise_for_status()
-                results = resp.json()
-            except Exception as exc:
-                logger.warning(f"Nominatim request failed for '{address}': {exc}")
-                return None
-
-            if not results:
-                logger.info(f"No result for '{address}'")
-                return None
-
-            return f"{results[0]['lat']},{results[0]['lon']}"
-
-        logger.warning(f"Gave up on '{address}': Nominatim kept rate limiting")
-        return None
+        return f"{results[0]['lat']},{results[0]['lon']}"

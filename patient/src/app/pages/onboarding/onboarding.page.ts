@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent,
   IonItem,
+  IonLabel,
   IonInput,
   IonSelect,
   IonSelectOption,
@@ -19,9 +20,9 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { EncryptionService } from '../../core/services/encryption.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { ActionHandlerService } from '../../core/services/action-handler.service';
 import { User } from '../../core/models/user.model';
 import { TIMEZONES } from '../../core/constants/timezone';
+import { AuthBrandingComponent } from '../../shared/components/auth-branding/auth-branding.component';
 
 @Component({
   selector: 'app-onboarding',
@@ -31,6 +32,7 @@ import { TIMEZONES } from '../../core/constants/timezone';
     FormsModule,
     IonContent,
     IonItem,
+    IonLabel,
     IonInput,
     IonSelect,
     IonSelectOption,
@@ -38,6 +40,7 @@ import { TIMEZONES } from '../../core/constants/timezone';
     IonText,
     IonSpinner,
     TranslatePipe,
+    AuthBrandingComponent,
   ],
   templateUrl: './onboarding.page.html',
   styleUrls: ['./onboarding.page.scss'],
@@ -46,7 +49,6 @@ export class OnboardingPage implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private encryptionService = inject(EncryptionService);
   private navCtrl = inject(NavController);
-  private actionHandler = inject(ActionHandlerService);
   private toastCtrl = inject(ToastController);
   private t = inject(TranslationService);
 
@@ -67,24 +69,15 @@ export class OnboardingPage implements OnInit, OnDestroy {
           this.communicationMethods.includes(m),
         )
       : [...this.onboardingMethods];
-    // Never drop the method the account already uses — sign-up picked it from
-    // the identifier the person typed. Leaving it out would show an empty
-    // select they cannot put back, 'manual' included.
-    if (this.communicationMethod && !base.includes(this.communicationMethod)) {
-      base.push(this.communicationMethod);
+    if (this.isManualPreconfigured) {
+      base.push('manual');
     }
     return base;
   }
 
-  firstName = '';
-  lastName = '';
-  email = '';
-  passwordLoginOffered = signal(false);
-  password = '';
-  passwordConfirm = '';
-
   preferredLanguage = '';
   communicationMethod = 'email';
+  isManualPreconfigured = false;
   mobilePhoneNumber = '';
   timezone = 'UTC';
 
@@ -108,33 +101,21 @@ export class OnboardingPage implements OnInit, OnDestroy {
     try {
       const user: User = await firstValueFrom(this.authService.getCurrentUser());
       this.currentUserId = user.pk;
-      this.firstName = user.first_name || '';
-      this.lastName = user.last_name || '';
-      this.email = user.email || '';
       this.preferredLanguage =
         user.preferred_language || this.t.currentLanguage();
       this.communicationMethod = user.communication_method || 'email';
+      this.isManualPreconfigured = user.communication_method === 'manual';
       this.mobilePhoneNumber = user.mobile_phone_number || '';
       this.timezone =
         user.timezone && user.timezone !== 'UTC'
           ? user.timezone
           : Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      this.requiresPassphrase.set(!!user.encryption_passphrase_pending);
+
       const config = await firstValueFrom(this.authService.getConfig());
       if (config?.communication_methods) {
         this.communicationMethods = config.communication_methods;
       }
-      // The pending flag survives on the account after encryption is turned
-      // off instance-wide, so asking for the passphrase on that alone would
-      // demand one for a feature nobody can use. EncryptionGuard gates on the
-      // same pair.
-      this.requiresPassphrase.set(
-        !!config?.encryption_enabled && !!user.encryption_passphrase_pending,
-      );
-      // Offering a password on an instance that refuses password login for
-      // patients would hand them a credential they can never use.
-      this.passwordLoginOffered.set(
-        !!config?.enable_patient_password_login && !config?.force_temporary_patients,
-      );
     } catch {
       // Ignore - keep defaults
     } finally {
@@ -154,23 +135,10 @@ export class OnboardingPage implements OnInit, OnDestroy {
     if (this.showMobilePhone && !this.mobilePhoneNumber) {
       return false;
     }
-    // An account created from a phone number has no address on file, and the
-    // API refuses communication_method=email without one.
-    if (this.communicationMethod === 'email' && !this.email) {
-      return false;
-    }
     if (this.requiresPassphrase() && !this.encryptionPassphrase) {
       return false;
     }
-    // The password is optional, but a half-filled pair is not.
-    if (this.password && this.password !== this.passwordConfirm) {
-      return false;
-    }
     return true;
-  }
-
-  get showEmail(): boolean {
-    return this.communicationMethod === 'email';
   }
 
   get showMobilePhone(): boolean {
@@ -203,58 +171,24 @@ export class OnboardingPage implements OnInit, OnDestroy {
       }
     }
 
-    if (this.password) {
-      try {
-        await firstValueFrom(this.authService.setPassword(this.password));
-      } catch (error: any) {
-        this.saving.set(false);
-        const detail =
-          error?.error?.new_password2?.[0] || error?.error?.new_password1?.[0];
-        await this.showToast(
-          detail || this.t.instant('onboarding.passwordRejected'),
-          'danger',
-        );
-        return;
-      }
-    }
-
     const updates: Partial<User> = {
-      first_name: this.firstName,
-      last_name: this.lastName,
       preferred_language: this.preferredLanguage,
       communication_method: this.communicationMethod as User['communication_method'],
       mobile_phone_number: this.mobilePhoneNumber || '',
       timezone: this.timezone,
       is_first_login: false,
     };
-    if (this.email) {
-      updates.email = this.email;
-    }
 
     this.authService.updateProfile(updates).subscribe({
       next: () => {
         if (this.preferredLanguage) {
           this.t.setLanguage(this.preferredLanguage);
         }
-        // The link that started the login is replayed here: a gate crossed on
-          // the way in turned its navigation back, and the action waited for
-          // this page to clear.
-        if (!this.actionHandler.runPendingAction()) {
-          this.navCtrl.navigateRoot('/home');
-        }
+        this.navCtrl.navigateRoot('/home');
       },
-      error: async (error: any) => {
+      error: async () => {
         this.saving.set(false);
-        // Surface what the API objected to instead of a blanket failure: the
-        // usual cause is an address or number already used by someone else.
-        const detail =
-          error?.error?.email?.[0] ||
-          error?.error?.mobile_phone_number?.[0] ||
-          error?.error?.non_field_errors?.[0];
-        await this.showToast(
-          detail || this.t.instant('onboarding.errorMessage'),
-          'danger',
-        );
+        await this.showToast(this.t.instant('onboarding.errorMessage'), 'danger');
       },
     });
   }

@@ -14,8 +14,7 @@ export interface INotificationSender {
 }
 
 export interface INotification {
-  // Null for realtime notifications received before the server id is known
-  id: number | null;
+  id: number;
   content: string;
   subject: string;
   communication_method: string;

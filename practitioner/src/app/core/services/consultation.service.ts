@@ -70,13 +70,8 @@ export class ConsultationService {
     );
   }
 
-  // `silent` opts out of the interceptor's automatic error toast, for callers
-  // that read a follow-up in the background and handle a failure themselves.
-  getConsultation(id: number, silent = false): Observable<Consultation> {
-    return this.http.get<Consultation>(
-      `${this.apiUrl}/consultations/${id}/`,
-      silent ? { context: new HttpContext().set(SKIP_ERROR_TOAST, true) } : {}
-    );
+  getConsultation(id: number): Observable<Consultation> {
+    return this.http.get<Consultation>(`${this.apiUrl}/consultations/${id}/`);
   }
 
   createConsultation(
@@ -258,8 +253,6 @@ export class ConsultationService {
     consultation__created_by?: number;
     consultation__owned_by?: number;
     status?: string;
-    /** Comma-separated statuses, e.g. PLANNED_APPOINTMENT_STATUSES. */
-    status_in?: string;
     scheduled_at__date__gte?: string;
     scheduled_at__date__lte?: string;
     future?: boolean;
@@ -547,11 +540,6 @@ export class ConsultationService {
     return this.http.get<IParticipantDetail>(
       `${this.apiUrl}/participants/${id}/`
     );
-  }
-
-  /** One message, to resolve the consultation a `message` deep link targets. */
-  getMessageById(id: string): Observable<ConsultationMessage> {
-    return this.http.get<ConsultationMessage>(`${this.apiUrl}/messages/${id}/`);
   }
 
   confirmParticipantPresence(

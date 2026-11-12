@@ -56,8 +56,8 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage)
   },
   {
-    path: 'verify',
-    loadComponent: () => import('./pages/verify-account/verify-account.page').then(m => m.VerifyAccountPage)
+    path: 'verify-email',
+    loadComponent: () => import('./pages/verify-email/verify-email.page').then(m => m.VerifyEmailPage)
   },
   {
     path: 'verify-invite',
@@ -117,17 +117,7 @@ export const routes: Routes = [
     canDeactivate: [canDeactivateVideoCall],
   },
   {
-    // The practitioner sheet is the map page with that result expanded, so this
-    // URL and /map render the same screen.
     path: 'practitioners/:pk/public',
-    loadComponent: () => import('./pages/map/map.page').then(m => m.MapPage),
-  },
-  {
-    path: 'confirm-visibility',
-    loadComponent: () => import('./pages/confirm-visibility/confirm-visibility.page').then(m => m.ConfirmVisibilityPage)
-  },
-  {
-    path: 'confirm-visibility/:id',
-    loadComponent: () => import('./pages/confirm-visibility/confirm-visibility.page').then(m => m.ConfirmVisibilityPage)
+    loadComponent: () => import('./pages/practitioner-profile/practitioner-profile.page').then(m => m.PractitionerProfilePage),
   },
 ];

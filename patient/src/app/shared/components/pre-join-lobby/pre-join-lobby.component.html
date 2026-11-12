@@ -6,9 +6,8 @@
     </div>
   } @else {
     <div class="lobby-card">
-      <ion-button fill="clear" color="light" class="lobby-close-btn" (click)="onClose()"
-                  [attr.aria-label]="'common.close' | translate">
-        <ion-icon name="close" slot="icon-only" aria-hidden="true"></ion-icon>
+      <ion-button fill="clear" color="light" class="lobby-close-btn" (click)="onClose()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
       </ion-button>
       <ion-text class="lobby-title">{{ 'preJoinLobby.readyToJoin' | translate }}</ion-text>
 
@@ -17,7 +16,7 @@
           <video #videoPreview autoplay playsinline muted class="preview-video"></video>
         } @else {
           <div class="camera-off-state">
-            <ion-icon name="videocam-off" aria-hidden="true"></ion-icon>
+            <ion-icon name="videocam-off"></ion-icon>
             @if (permissionDenied()) {
               <ion-text class="permission-text">{{ permissionError() }}</ion-text>
             } @else {
@@ -37,35 +36,16 @@
         <ion-button
           [color]="cameraEnabled() ? 'light' : 'danger'"
           class="toggle-btn"
-          [attr.aria-label]="'preJoinLobby.camera' | translate"
-          [attr.aria-pressed]="cameraEnabled()"
           (click)="toggleCamera()"
           [disabled]="permissionDenied()">
-          <ion-icon [name]="cameraEnabled() ? 'videocam' : 'videocam-off'" slot="icon-only" aria-hidden="true"></ion-icon>
+          <ion-icon [name]="cameraEnabled() ? 'videocam' : 'videocam-off'" slot="icon-only"></ion-icon>
         </ion-button>
-        @if (backgroundBlurSupported()) {
-          <ion-button
-            [color]="backgroundBlurEnabled() ? 'primary' : 'light'"
-            class="toggle-btn"
-            (click)="toggleBackgroundBlur()"
-            [disabled]="!cameraEnabled() || isTogglingBackgroundBlur()"
-            [attr.aria-label]="'videoConsultation.backgroundBlur' | translate"
-            [title]="'videoConsultation.backgroundBlur' | translate">
-            @if (isTogglingBackgroundBlur()) {
-              <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
-            } @else {
-              <ion-icon name="sparkles-outline" slot="icon-only" aria-hidden="true"></ion-icon>
-            }
-          </ion-button>
-        }
         <ion-button
           [color]="microphoneEnabled() ? 'light' : 'danger'"
           class="toggle-btn"
-          [attr.aria-label]="'preJoinLobby.microphone' | translate"
-          [attr.aria-pressed]="microphoneEnabled()"
           (click)="toggleMicrophone()"
           [disabled]="permissionDenied()">
-          <ion-icon [name]="microphoneEnabled() ? 'mic' : 'mic-off'" slot="icon-only" aria-hidden="true"></ion-icon>
+          <ion-icon [name]="microphoneEnabled() ? 'mic' : 'mic-off'" slot="icon-only"></ion-icon>
         </ion-button>
       </div>
 
@@ -77,7 +57,6 @@
               [value]="selectedCameraId"
               (ionChange)="onCameraChange($event)"
               interface="action-sheet"
-              [attr.aria-label]="'preJoinLobby.camera' | translate"
               [placeholder]="'preJoinLobby.selectCamera' | translate">
               @for (option of cameraOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
@@ -93,7 +72,6 @@
               [value]="selectedMicrophoneId"
               (ionChange)="onMicrophoneChange($event)"
               interface="action-sheet"
-              [attr.aria-label]="'preJoinLobby.microphone' | translate"
               [placeholder]="'preJoinLobby.selectMicrophone' | translate">
               @for (option of microphoneOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
@@ -109,7 +87,6 @@
               [value]="selectedSpeakerId"
               (ionChange)="onSpeakerChange($event)"
               interface="action-sheet"
-              [attr.aria-label]="'preJoinLobby.speaker' | translate"
               [placeholder]="'preJoinLobby.selectSpeaker' | translate">
               @for (option of speakerOptions; track option.value) {
                 <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>

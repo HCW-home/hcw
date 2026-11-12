@@ -1,0 +1,32 @@
+export declare const READY = "_WORKER_READY";
+/**
+ * True if the object implements the Transferable interface
+ *
+ * @export
+ * @param {unknown} value
+ * @return {*}  {boolean}
+ */
+export declare function isTransferable(value: unknown): boolean;
+/**
+ * True if object implements Transferable and has been returned
+ * by the Piscina.move() function
+ *
+ * TODO: narrow down the type of value
+ * @export
+ * @param {(unknown & PiscinaMovable)} value
+ * @return {*}  {boolean}
+ */
+export declare function isMovable(value: any): boolean;
+export declare function markMovable(value: {}): void;
+export declare const commonState: {
+    isWorkerThread: boolean;
+    workerData: undefined;
+};
+export declare function maybeFileURLToPath(filename: string): string;
+export declare function getAvailableParallelism(): number;
+export declare function withNullPrototype<T extends object>(source: T, overrides?: Partial<T>): T;
+export declare function promiseResolvers<T = any>(): {
+    promise: Promise<T>;
+    resolve: (res: T) => void;
+    reject: (err: Error) => void;
+};

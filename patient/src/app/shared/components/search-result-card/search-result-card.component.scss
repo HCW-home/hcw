@@ -6,9 +6,6 @@
 }
 
 .org-card {
-  // Anchors .oc-name-button::after, which stretches the click target back over
-  // the whole card now that the card itself is no longer a click handler.
-  position: relative;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: var(--radius-card);
@@ -23,76 +20,6 @@
   &.selected {
     border-color: var(--app-teal);
     box-shadow: 0 0 0 2px var(--app-teal), var(--shadow-md);
-  }
-
-  // Holding the whole sheet: the card stops behaving like a list row.
-  &.expanded {
-    cursor: default;
-    box-shadow: var(--shadow-md);
-    animation: cardGrow 0.28s var(--app-ease);
-  }
-}
-
-// The card keeps its position and unfolds in place, so the sheet reads as the
-// same block growing rather than a new one taking over.
-@keyframes cardGrow {
-  from {
-    transform: scale(0.985);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-@keyframes detailsUnfold {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    max-height: 2400px;
-    transform: none;
-  }
-}
-
-.oc-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 14px 18px 0;
-  padding: 6px 10px 6px 6px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--app-ink-3);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s var(--app-ease), color 0.15s var(--app-ease);
-
-  ion-icon {
-    font-size: 17px;
-  }
-
-  &:hover {
-    background: var(--app-surface-muted);
-    color: var(--app-teal-dark);
-  }
-}
-
-.oc-details {
-  padding: 0 18px 4px;
-  overflow: hidden;
-  animation: detailsUnfold 0.32s var(--app-ease);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .org-card.expanded,
-  .oc-details {
-    animation: none;
   }
 }
 
@@ -163,50 +90,6 @@
   &:hover {
     color: var(--app-teal-dark);
   }
-
-  // The real control. Looks like plain heading text; ::after re-creates the
-  // full-card hit area so pointer behaviour is unchanged.
-  .oc-name-button {
-    display: block;
-    width: 100%;
-    padding: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    color: inherit;
-    text-align: inherit;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--radius-card);
-    }
-
-    // Card-wide outline, since the button's own box is only the name.
-    &:focus-visible {
-      outline: none;
-
-      &::after {
-        outline: 3px solid var(--app-focus-ring);
-        outline-offset: -3px;
-      }
-    }
-  }
-}
-
-// Buttons inside the expanded sheet must sit above the stretched hit area,
-// otherwise ::after would swallow their clicks.
-.oc-back,
-.day-arrow,
-.slot-chip,
-.rdv-button {
-  position: relative;
-  z-index: 1;
 }
 
 // Same two-tone chip system as the dashboard cards: brand tint for people,
@@ -292,8 +175,6 @@
     .rdv-button {
       width: auto;
       flex-shrink: 0;
-      // Holds the right edge even when no slot area is there to push it.
-      margin-left: auto;
     }
   }
 }
@@ -307,6 +188,20 @@
     width: 20px;
     height: 20px;
     color: var(--app-teal);
+  }
+}
+
+.oc-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--app-ink-3);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--app-ink-4);
+    flex-shrink: 0;
   }
 }
 

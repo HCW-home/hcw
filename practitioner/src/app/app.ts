@@ -6,12 +6,14 @@ import { OfflineIndicatorComponent } from './core/components/offline-indicator.c
 import { MaintenanceOverlayComponent } from './core/components/maintenance-overlay.component';
 import { Confirmation } from './shared/components/confirmation/confirmation';
 import { Auth } from './core/services/auth';
+import { TranslationService } from './core/services/translation.service';
 import { UserWebSocketService } from './core/services/user-websocket.service';
 import { ActionHandlerService } from './core/services/action-handler.service';
-import { PendingActionService } from './core/services/pending-action.service';
+import { ActiveCallService } from './core/services/active-call.service';
 import { IncomingCallService } from './core/services/incoming-call.service';
 import { BrowserNotificationService } from './core/services/browser-notification.service';
 import { PushNotificationService } from './core/services/push-notification.service';
+import { ConsultationService } from './core/services/consultation.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { PipWrapper } from './shared/components/pip-wrapper/pip-wrapper';
 import { RoutePaths } from './core/constants/routes';
@@ -28,12 +30,14 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private authService: Auth,
+    private translationService: TranslationService,
     private userWsService: UserWebSocketService,
     private actionHandler: ActionHandlerService,
-    private pendingActionService: PendingActionService,
+    private activeCallService: ActiveCallService,
     private incomingCallService: IncomingCallService,
     private browserNotificationService: BrowserNotificationService,
     private pushNotificationService: PushNotificationService,
+    private consultationService: ConsultationService,
     private appUpdateService: AppUpdateService,
     private router: Router
   ) {}
@@ -96,7 +100,6 @@ export class App implements OnInit, OnDestroy {
     const action = urlParams.get('action');
     const id = urlParams.get('id');
     const email = urlParams.get('email');
-    const model = urlParams.get('model');
     const uid = urlParams.get('uid');
     const token = urlParams.get('token');
 
@@ -105,40 +108,21 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
-    // The query string reaches the page it is handed to and no further: an
-    // OpenID login leaves through the provider's own redirect URI, and the
-    // terms, onboarding and encryption gates each restart from a bare route.
-    // Storing the action lets whichever page finally lets the user in replay
-    // it; it is dropped again as soon as it reaches its destination.
-    if (action) {
-      this.pendingActionService.save({ action, id, model, email });
-    }
-
     if (authToken) {
       if (this.authService.isLoggedIn()) {
         // Already authenticated — handle the action directly without re-login
-        this.actionHandler.handleAction(action, id, model);
+        this.navigateToAction(action, id);
       } else {
         this.router.navigate([`/${RoutePaths.VERIFY_INVITE}`], {
-          queryParams: { auth: authToken, action, id, model }
+          queryParams: { auth: authToken, action, id }
         });
       }
     } else if (email) {
-      // An open session runs the action right away: routing to /auth would hit
-      // redirectIfAuthenticated, which drops action and id on its way to the
-      // dashboard. The link names its recipient, so a session belonging to
-      // somebody else is called out — the same warning the notification list
-      // gives — but the action still runs rather than being swallowed.
-      if (this.authService.isLoggedIn()) {
-        this.actionHandler.handleAction(action, id, model);
-        this.actionHandler.warnOnRecipientMismatch(email);
-        return;
-      }
       this.router.navigate([`/${RoutePaths.AUTH}`], {
-        queryParams: { email, action, id, model }
+        queryParams: { email, action, id }
       });
     } else if (action && id) {
-      this.actionHandler.handleAction(action, id, model);
+      this.navigateToAction(action, id);
     }
   }
 
@@ -146,5 +130,24 @@ export class App implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.userWsService.disconnect();
+  }
+
+  private navigateToAction(action: string | null, id: string | null): void {
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: (participant) => {
+          this.activeCallService.startCall({
+            appointmentId: participant.appointment.id,
+          });
+          this.incomingCallService.setActiveCall(participant.appointment.id);
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        }
+      });
+    } else {
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+    }
   }
 }

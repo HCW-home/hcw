@@ -5,7 +5,7 @@
         <span class="header-title">{{ headerTitle }}</span>
       }
       <span class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-        <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'" aria-hidden="true"></ion-icon>
+        <ion-icon [name]="isConnected ? 'wifi-outline' : 'cloud-offline-outline'"></ion-icon>
         {{ isConnected ? ('messageList.connected' | translate) : ('messageList.disconnected' | translate) }}
       </span>
     </div>
@@ -20,7 +20,7 @@
     }
     @if (messages.length === 0 && !isLoadingMore) {
       <div class="no-messages">
-        <ion-icon name="chatbubbles-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+        <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
         <span>{{ 'messageList.noMessages' | translate }}</span>
       </div>
     } @else {
@@ -53,16 +53,14 @@
                 (keyup.enter)="saveEdit()"
               />
               <div class="edit-actions">
-                <ion-button fill="clear" size="small" (click)="cancelEdit(); $event.stopPropagation()"
-                            [attr.aria-label]="'common.cancel' | translate">
-                  <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
+                <ion-button fill="clear" size="small" (click)="cancelEdit(); $event.stopPropagation()">
+                  <ion-icon slot="icon-only" name="close-outline"></ion-icon>
                 </ion-button>
-                <ion-button fill="clear" size="small" (click)="saveEdit(); $event.stopPropagation()" [disabled]="!editContent.trim() || isEditing"
-                            [attr.aria-label]="'common.save' | translate">
+                <ion-button fill="clear" size="small" (click)="saveEdit(); $event.stopPropagation()" [disabled]="!editContent.trim() || isEditing">
                   @if (isEditing) {
                     <ion-spinner name="dots"></ion-spinner>
                   } @else {
-                    <ion-icon slot="icon-only" name="checkmark-circle-outline" color="success" aria-hidden="true"></ion-icon>
+                    <ion-icon slot="icon-only" name="checkmark-circle-outline" color="success"></ion-icon>
                   }
                 </ion-button>
               </div>
@@ -76,15 +74,13 @@
                   <span class="message-edited">{{ 'messageList.edited' | translate }}</span>
                 }
                 @if (canEditMessage(message)) {
-                  <button type="button" class="edit-button" (click)="startEdit(message); $event.stopPropagation()"
-                          [attr.aria-label]="'messageList.editMessage' | translate">
-                    <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+                  <button class="edit-button" (click)="startEdit(message); $event.stopPropagation()">
+                    <ion-icon name="create-outline"></ion-icon>
                   </button>
                 }
                 @if (canDeleteMessage(message)) {
-                  <button type="button" class="delete-button" (click)="onDeleteClick(message); $event.stopPropagation()"
-                          [attr.aria-label]="'messageList.deleteMessage' | translate">
-                    <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+                  <button class="delete-button" (click)="onDeleteClick(message); $event.stopPropagation()">
+                    <ion-icon name="trash-outline"></ion-icon>
                   </button>
                 }
               </div>
@@ -98,11 +94,9 @@
               @if (message.attachment && !isMessageDeleted(message)) {
                 @if (isImageAttachment(message.attachment)) {
                   @if (getImageUrl(message.id)) {
-                    <button type="button" class="message-image-attachment"
-                            (click)="openImageViewer(message)"
-                            [attr.aria-label]="'messageList.openImage' | translate:{ name: message.attachment.file_name }">
+                    <div class="message-image-attachment" (click)="openImageViewer(message)">
                       <img [src]="getImageUrl(message.id)" [alt]="message.attachment.file_name" class="attachment-image-preview">
-                    </button>
+                    </div>
                   } @else {
                     <div class="message-attachment loading">
                       <ion-spinner name="crescent"></ion-spinner>
@@ -110,13 +104,11 @@
                     </div>
                   }
                 } @else {
-                  <button type="button" class="message-attachment downloadable"
-                          (click)="downloadAttachment(message)"
-                          [attr.aria-label]="'messageList.downloadAttachment' | translate:{ name: message.attachment.file_name }">
-                    <ion-icon [name]="getAttachmentIcon(message.attachment)" aria-hidden="true"></ion-icon>
+                  <div class="message-attachment downloadable" (click)="downloadAttachment(message)">
+                    <ion-icon [name]="getAttachmentIcon(message.attachment)"></ion-icon>
                     <span class="attachment-name">{{ message.attachment.file_name }}</span>
-                    <ion-icon name="download-outline" class="attachment-action-icon" aria-hidden="true"></ion-icon>
-                  </button>
+                    <ion-icon name="download-outline" class="attachment-action-icon"></ion-icon>
+                  </div>
                 }
               }
             </div>
@@ -129,11 +121,10 @@
 
   @if (selectedFile) {
     <div class="selected-file-preview">
-      <ion-icon name="attach-outline" aria-hidden="true"></ion-icon>
+      <ion-icon name="attach-outline"></ion-icon>
       <span class="file-name">{{ selectedFile.name }}</span>
-      <ion-button fill="clear" size="small" (click)="removeSelectedFile()"
-                  [attr.aria-label]="'messageList.removeFile' | translate">
-        <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
+      <ion-button fill="clear" size="small" (click)="removeSelectedFile()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
       </ion-button>
     </div>
   }
@@ -145,9 +136,8 @@
       class="file-input-hidden"
       (change)="onFileSelected($event)"
     />
-    <ion-button fill="clear" class="attach-btn" [disabled]="!isConnected" (click)="openFilePicker()"
-                [attr.aria-label]="'messageList.attachFile' | translate">
-      <ion-icon slot="icon-only" name="attach-outline" aria-hidden="true"></ion-icon>
+    <ion-button fill="clear" class="attach-btn" [disabled]="!isConnected" (click)="openFilePicker()">
+      <ion-icon slot="icon-only" name="attach-outline"></ion-icon>
     </ion-button>
     <input
       type="text"
@@ -161,27 +151,19 @@
       fill="solid"
       class="send-btn"
       [disabled]="(!newMessage.trim() && !selectedFile) || !isConnected"
-      (click)="onSendMessage()"
-      [attr.aria-label]="'messageList.send' | translate">
-      <ion-icon slot="icon-only" name="arrow-up" aria-hidden="true"></ion-icon>
+      (click)="onSendMessage()">
+      <ion-icon slot="icon-only" name="arrow-up"></ion-icon>
     </ion-button>
   </div>
 </div>
 
 @if (viewingImage()) {
-  <!-- The backdrop is inert: closing happens through the header button or
-       Escape only. A stray click next to a full-screen image should not throw
-       it away, and backdrop dismissal is invisible to anyone not using a
-       pointer. No aria-hidden here either — this element wraps the dialog, so
-       hiding it would hide the dialog too. -->
-  <div class="image-viewer-overlay">
-    <div class="image-viewer-content"
-         role="dialog" aria-modal="true" aria-labelledby="image-viewer-title">
+  <div class="image-viewer-overlay" (click)="closeImageViewer()">
+    <div class="image-viewer-content" (click)="$event.stopPropagation()">
       <div class="image-viewer-header">
-        <span class="image-viewer-title" id="image-viewer-title">{{ viewingImage()?.fileName }}</span>
-        <ion-button fill="clear" (click)="closeImageViewer()"
-                    [attr.aria-label]="'common.close' | translate">
-          <ion-icon slot="icon-only" name="close-outline" aria-hidden="true"></ion-icon>
+        <span class="image-viewer-title">{{ viewingImage()?.fileName }}</span>
+        <ion-button fill="clear" (click)="closeImageViewer()">
+          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
         </ion-button>
       </div>
       <img [src]="viewingImage()?.url" [alt]="viewingImage()?.fileName" class="full-image">

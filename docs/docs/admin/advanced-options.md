@@ -18,7 +18,6 @@ The advanced configuration section provides fine-grained control over platform b
 | Option | Code | Default | Description |
 |--------|------|---------|-------------|
 | Hours after closure before a follow-up is automatically deleted (0 to disable) | `TEMPORARY_USER_DELETE_HOURS` | 0 | Defines how long a closed follow-up and its associated temporary user are kept before automatic deletion. Set to 0 to disable automatic deletion. |
-| Minutes after the appointment join window closes before a temporary appointment-chat consultation is automatically closed (0 to disable) | `AUTO_CLOSE_TEMPORARY_CONSULTATIONS_MINUTES` | 0 | Temporary follow-ups are created automatically when an online appointment is booked without an explicit follow-up, so the appointment chat still works. This delay starts once the appointment join window has closed (end of the appointment plus `CALL_LIMIT_JOIN_MINUTES`), so the chat is never closed while participants can still rejoin the call. Set to 0 to keep them open until closed manually. |
 | Automatically delete temporary users with no future appointments | `TEMPORARY_USER_AUTO_DELETE` | FALSE | When enabled, temporary patient accounts that have no upcoming appointments are automatically removed. |
 
 ## General Options
@@ -75,19 +74,6 @@ ever looks at `scheduled` appointments, a manual status is never overwritten.
 | Option | Code | Default | Description |
 |--------|------|---------|-------------|
 | Maximum file upload size in MB (0 to disable limit) | `MAX_UPLOAD_SIZE_MB` | 10 | Maximum allowed file size for uploads in chat and consultations. Set to 0 to allow unlimited file sizes. |
-
-## Geocoding
-
-| Option | Code | Default | Description |
-|--------|------|---------|-------------|
-| Nominatim instance turning addresses into map coordinates | `NOMINATIM_URL` | Value of the `NOMINATIM_URL` environment variable | Practitioner and organisation addresses are geocoded so patients can find them on the map. Either the root URL of a [Nominatim](https://nominatim.org/) instance or its `/search` endpoint. Leave empty to fall back to the environment variable, which itself defaults to the public OpenStreetMap instance. |
-
-The public instance is capped at one request per second by its usage policy, so
-an installation geocoding many addresses is better served by its own instance.
-How fast the geocoding may query it is not set here but in the
-`NOMINATIM_RATE_LIMIT` environment variable, since the workers doing the
-geocoding are shared by every tenant — see
-[Environment Variables](../deployment/environment-variables.md#geocoding).
 
 ## Video Features
 

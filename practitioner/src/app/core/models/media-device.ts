@@ -7,7 +7,6 @@ export interface IMediaDevices {
 export interface IPreJoinSettings {
   cameraEnabled: boolean;
   microphoneEnabled: boolean;
-  backgroundBlurEnabled: boolean;
   cameraDeviceId: string | null;
   microphoneDeviceId: string | null;
   speakerDeviceId: string | null;

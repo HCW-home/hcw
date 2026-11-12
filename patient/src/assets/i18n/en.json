@@ -8,7 +8,6 @@
     "cancel": "Cancel",
     "remove": "Remove",
     "close": "Close",
-    "clear": "Clear",
     "back": "Back",
     "save": "Save",
     "error": "Error",
@@ -27,18 +26,15 @@
     "appNeedsReload": "The application needs to be reloaded to continue",
     "reload": "Reload",
     "offline": "Server connection lost",
-    "reconnecting": "Server connection lost. Reconnecting...",
-    "required": "required",
-    "language": "Language",
-    "skipToContent": "Skip to main content",
-    "previous": "Previous",
-    "next": "Next"
+    "reconnecting": "Server connection lost. Reconnecting..."
   },
   "login": {
     "title": "Sign In",
     "subtitle": "Sign in to your account",
     "platformDescription": "Your secure telemedicine platform for remote consultations with your healthcare provider.",
+    "emailPlaceholder": "Email",
     "passwordPlaceholder": "Password",
+    "emailRequired": "Valid email is required",
     "passwordMinLength": "Password must be at least 6 characters",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
@@ -54,37 +50,31 @@
     "verifyCode": "Verify Code",
     "codeSentTo": "A verification code has been sent to your email.",
     "resendCode": "Resend Code",
-    "resendCodeIn": "Resend Code ({{seconds}} s)",
-    "codeExpired": "This code has expired. Please request a new one.",
-    "tooManyRequests": "Too many requests. Please wait a moment before asking for a new code.",
     "didntReceiveCode": "Didn't receive the code?",
     "backToEmail": "Change",
     "tooManyAttempts": "Too many attempts. Please request a new code.",
     "invalidVerificationCode": "Invalid verification code.",
     "codeSent": "Verification code sent.",
-    "genericError": "An error occurred. Please try again.",
-    "identifierPlaceholder": "Email or phone number",
-    "identifierRequired": "Enter a valid email address or phone number",
-    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
-    "showPassword": "Show password",
-    "hidePassword": "Hide password",
-    "identifierLabel": "Email or phone number",
-    "passwordLabel": "Password",
-    "verificationCodeLabel": "Verification code"
+    "genericError": "An error occurred. Please try again."
   },
   "register": {
     "platformDescription": "Create your account and start your telemedicine consultations today.",
     "title": "Create Account",
     "subtitle": "Sign up to get started",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "firstNameRequired": "First name is required",
+    "emailPlaceholder": "Email",
+    "emailInvalid": "Please enter a valid email",
+    "passwordPlaceholder": "Password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "confirmPassword": "Confirm Password",
+    "passwordsMismatch": "Passwords do not match",
     "registrationDisabled": "Registration is currently disabled.",
     "hasAccount": "Already have an account?",
     "creatingAccount": "Creating account...",
-    "registrationFailed": "Registration failed. Please try again.",
-    "identifierPlaceholder": "Email or phone number",
-    "identifierHelp": "We will send you a 6-digit code to confirm it.",
-    "identifierInvalid": "Enter a valid email address or phone number",
-    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
-    "identifierLabel": "Email or phone number"
+    "verificationEmailSent": "A verification email has been sent to your email address.",
+    "registrationFailed": "Registration failed. Please try again."
   },
   "forgotPassword": {
     "title": "Forgot Password?",
@@ -114,6 +104,14 @@
     "linkExpired": "Reset link has expired or is invalid",
     "invalidResetLink": "Invalid reset link"
   },
+  "verifyEmail": {
+    "title": "Email Verification",
+    "verifying": "Verifying your email address...",
+    "success": "Your email address has been verified successfully.",
+    "goToLogin": "Go to Login",
+    "invalidLink": "Invalid or missing verification link.",
+    "verificationFailed": "Email verification failed. The link may be invalid or expired."
+  },
   "verifyInvite": {
     "verifyingCode": "Verifying your code...",
     "authenticating": "Authenticating...",
@@ -128,9 +126,6 @@
     "didntReceive": "Didn't receive the code?",
     "sending": "Sending...",
     "resendCode": "Resend Code",
-    "resendCodeIn": "Resend Code ({{seconds}} s)",
-    "codeExpired": "This code has expired. Please request a new one.",
-    "tooManyRequests": "Too many requests. Please wait a moment before asking for a new code.",
     "havingTrouble": "Having trouble?",
     "signInManually": "Sign in manually",
     "noAuthToken": "No authentication token provided",
@@ -180,8 +175,7 @@
     "appointmentNotFound": "Appointment not found",
     "failedToLoadParticipant": "Failed to load participant information",
     "statusCompleted": "Completed",
-    "statusNoshow": "Missed",
-    "title": "Home"
+    "statusNoshow": "Missed"
   },
   "newRequest": {
     "selectSpecialty": "Select Specialty",
@@ -238,10 +232,7 @@
     "cancelConfirmTitle": "Cancel this request?",
     "cancelConfirmMessage": "The information you entered will be lost.",
     "cancelConfirmStay": "Continue request",
-    "cancelConfirmLeave": "Leave",
-    "symptomLabel": "Describe your symptoms",
-    "previousWeek": "Previous week",
-    "nextWeek": "Next week"
+    "cancelConfirmLeave": "Leave"
   },
   "profile": {
     "changeServer": "Change server",
@@ -296,8 +287,7 @@
     "encryptionPassphraseChanged": "Passphrase updated",
     "encryptionInvalidOldPassphrase": "The current passphrase is incorrect",
     "encryptionNewPassphraseTitle": "New passphrase generated",
-    "encryptionNewPassphraseMessage": "Save this passphrase now — it is shown only once.",
-    "changePhoto": "Change profile photo"
+    "encryptionNewPassphraseMessage": "Save this passphrase now — it is shown only once."
   },
   "onboarding": {
     "title": "Welcome!",
@@ -313,15 +303,7 @@
     "encryptionNewPassphrase": "New passphrase",
     "encryptionInvalidPassphrase": "Invalid passphrase. Please try again.",
     "save": "Save and continue",
-    "errorMessage": "Unable to save your preferences. Please try again.",
-    "firstName": "First name",
-    "lastName": "Last name",
-    "email": "Email",
-    "password": "Password",
-    "passwordConfirm": "Confirm password",
-    "passwordOptional": "Optional. You can always sign in with a code instead.",
-    "passwordsMismatch": "Passwords do not match",
-    "passwordRejected": "This password was refused. Try a longer one."
+    "errorMessage": "Unable to save your preferences. Please try again."
   },
   "activateEncryption": {
     "title": "Activate encryption",
@@ -349,14 +331,7 @@
     "typePlaceholder": "Type a message...",
     "today": "Today",
     "yesterday": "Yesterday",
-    "unreadMessages": "Unread messages",
-    "openImage": "Open image {{name}}",
-    "downloadAttachment": "Download {{name}}",
-    "editMessage": "Edit message",
-    "deleteMessage": "Delete message",
-    "removeFile": "Remove file",
-    "attachFile": "Attach a file",
-    "send": "Send message"
+    "unreadMessages": "Unread messages"
   },
   "preJoinLobby": {
     "settingUp": "Setting up your devices...",
@@ -504,23 +479,6 @@
     "declined": "You have declined the appointment",
     "failedDecline": "Failed to decline"
   },
-  "confirmVisibility": {
-    "title": "Confirm Access",
-    "error": "Error",
-    "goToHome": "Go to Home",
-    "confirmed": "Access Confirmed",
-    "confirmedMessage": "The practitioner can now access your record.",
-    "explanation": "A practitioner from {{ organisation }} would like to access your record. If you agree, confirm below.",
-    "explanationWithName": "{{ name }} from {{ organisation }} would like to access your record. If you agree, confirm below.",
-    "explanationPersonal": "{{ name }} would like to access your record. If you agree, confirm below.",
-    "explanationGeneric": "A practitioner would like to access your record. If you agree, confirm below.",
-    "failedLoad": "Failed to load the request",
-    "confirmButton": "Confirm access",
-    "skipToHome": "Skip and go to home",
-    "invalidLink": "Invalid confirmation link",
-    "confirmSuccess": "Access confirmed successfully",
-    "failedConfirm": "Failed to confirm access"
-  },
   "terms": {
     "accept": "Accept",
     "acceptCheckbox": "I have read and accept the terms and conditions",
@@ -543,8 +501,6 @@
     "connectedToConsultation": "Connected to consultation",
     "failedJoin": "Failed to join video call",
     "failedToggleCamera": "Failed to toggle camera",
-    "backgroundBlur": "Background blur",
-    "failedToggleBackgroundBlur": "Failed to toggle background blur",
     "failedToggleMic": "Failed to toggle microphone",
     "failedToggleScreen": "Failed to toggle screen share",
     "switchingCamera": "Switching camera...",
@@ -560,18 +516,7 @@
     "messageUpdated": "Message updated",
     "failedUpdate": "Failed to update message",
     "messageDeleted": "Message deleted",
-    "failedDelete": "Failed to delete message",
-    "microphone": "Microphone",
-    "camera": "Camera",
-    "endCall": "End call",
-    "screenShare": "Share screen",
-    "switchCamera": "Switch camera",
-    "chatWithUnread": "Chat, {{count}} unread messages",
-    "micMuted": "Microphone muted",
-    "cameraOff": "Camera off",
-    "participantJoined": "{{name}} joined the consultation",
-    "participantLeft": "{{name}} left the consultation",
-    "title": "Video consultation"
+    "failedDelete": "Failed to delete message"
   },
   "videoCall": {
     "leaveCallTitle": "Leave video call?",
@@ -597,8 +542,8 @@
     "resultsTitle": "Results",
     "typeDoctor": "Practitioner",
     "typeOrganisation": "Facility",
+    "noSlots": "No availability",
     "bookButton": "Book an appointment",
-    "detailsButton": "Details",
     "suggestSpecialities": "Specialities",
     "suggestPractitioners": "Practitioners",
     "suggestOrganisations": "Facilities",
@@ -644,29 +589,9 @@
   },
   "practitioner": {
     "notFound": "Practitioner not found",
-    "backToResults": "Back to results",
     "organisation": "Organisation",
     "additionalInfo": "Additional information",
     "contact": "Contact",
     "profile": "Profile"
-  },
-  "verifyAccount": {
-    "title": "Confirm your account",
-    "identifierPlaceholder": "Email or phone number",
-    "invalidIdentifier": "Enter a valid email address or phone number",
-    "phoneNeedsCountryCode": "Add your country code, for example +33612345678",
-    "codeSentTo": "Enter the 6-digit code we just sent you.",
-    "enterCode": "Enter 6-digit code",
-    "invalidCode": "Invalid or expired code.",
-    "invalidCodeFormat": "Please enter a valid 6-digit code",
-    "verifyCode": "Confirm",
-    "didntReceiveCode": "Didn't receive the code?",
-    "resendCode": "Resend code",
-    "resendCodeIn": "Resend code ({{seconds}} s)",
-    "tooManyRequests": "Too many requests. Please wait a moment before asking for a new code.",
-    "sendingCode": "Sending...",
-    "codeSent": "Code sent.",
-    "sendFailed": "Could not send the code. Please try again.",
-    "backToLogin": "Back to sign in"
   }
 }

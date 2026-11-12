@@ -54,16 +54,11 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
   private t = inject(TranslationService);
 
   @Output() join = new EventEmitter<IPreJoinSettings>();
-  // Renaming this output would change the component's public API; unrelated to a11y work.
-  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() close = new EventEmitter<void>();
   @ViewChild('videoPreview') videoPreviewRef!: ElementRef<HTMLVideoElement>;
 
   cameraEnabled = signal(true);
   microphoneEnabled = signal(true);
-  backgroundBlurSupported = signal(false);
-  backgroundBlurEnabled = signal(false);
-  isTogglingBackgroundBlur = signal(false);
   audioLevel = signal(0);
 
   cameraOptions: DeviceOption[] = [];
@@ -135,10 +130,7 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
       this.updateDeviceOptions(devices);
 
       if (devices.cameras.length > 0) {
-        // Keep the camera selected by facingMode (front-facing by default)
-        // instead of assuming the browser's first enumerated camera is front.
-        this.selectedCameraId =
-          this.mediaDeviceService.getPreviewCameraId() || devices.cameras[0].deviceId;
+        this.selectedCameraId = devices.cameras[0].deviceId;
       } else {
         this.cameraEnabled.set(false);
       }
@@ -165,13 +157,6 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
       // Attach video preview after loading is done so the <video> element exists in the DOM
       if (cameraStarted && this.cameraEnabled()) {
         this.attachVideoPreview();
-        try {
-          this.backgroundBlurSupported.set(
-            await this.mediaDeviceService.supportsBackgroundBlur(),
-          );
-        } catch {
-          this.backgroundBlurSupported.set(false);
-        }
       }
     }
   }
@@ -231,23 +216,6 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  async toggleBackgroundBlur(): Promise<void> {
-    if (this.isTogglingBackgroundBlur() || !this.cameraEnabled()) return;
-
-    this.isTogglingBackgroundBlur.set(true);
-    try {
-      const enabled = !this.backgroundBlurEnabled();
-      await this.mediaDeviceService.setBackgroundBlur(enabled);
-      this.backgroundBlurEnabled.set(enabled);
-      this.attachVideoPreview();
-    } catch {
-      this.backgroundBlurEnabled.set(false);
-    } finally {
-      this.isTogglingBackgroundBlur.set(false);
-      this.cdr.markForCheck();
-    }
-  }
-
   async onCameraChange(event: CustomEvent): Promise<void> {
     this.selectedCameraId = event.detail.value;
     if (this.cameraEnabled() && this.selectedCameraId) {
@@ -285,7 +253,6 @@ export class PreJoinLobbyComponent implements OnInit, OnDestroy {
     this.join.emit({
       cameraEnabled: this.cameraEnabled(),
       microphoneEnabled: this.microphoneEnabled(),
-      backgroundBlurEnabled: this.backgroundBlurEnabled(),
       cameraDeviceId: this.selectedCameraId,
       microphoneDeviceId: this.selectedMicrophoneId,
       speakerDeviceId: this.selectedSpeakerId,

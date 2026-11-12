@@ -21,9 +21,7 @@
       margin-bottom: 20px;
     }
 
-    // Was an <h1>; demoted to a <p> because six pages embed this component
-    // alongside their own page title, and a page can only have one h1.
-    .brand-name {
+    h1 {
       font-size: 2rem;
       font-weight: 700;
       margin: 0 0 12px;
@@ -63,7 +61,7 @@
         margin-bottom: 12px;
       }
 
-      .brand-name {
+      h1 {
         font-size: 1.5rem;
         margin-bottom: 8px;
       }

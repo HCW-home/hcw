@@ -30,15 +30,9 @@ import { Slot } from '../../../core/models/consultation.model';
 export class SearchResultCardComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) item!: SearchItem;
   @Input() selected = false;
-  // What the main button does: start a booking, or open the practitioner sheet.
-  @Input() primaryAction: 'book' | 'details' = 'book';
-  // Grows the card to hold the projected detail content instead of a new block.
-  @Input() expanded = false;
 
   @Output() itemClick = new EventEmitter<SearchItem>();
   @Output() book = new EventEmitter<BookingIntent>();
-  @Output() details = new EventEmitter<SearchItem>();
-  @Output() collapse = new EventEmitter<void>();
 
   private destroy$ = new Subject<void>();
 
@@ -62,21 +56,6 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
 
   hasPrevDay = computed(() => this.dateIndex() > 0);
   hasNextDay = computed(() => this.dateIndex() < (this.slots()?.dates.length ?? 0) - 1);
-
-  // The expanded sheet books through its own slot chips, so it carries no
-  // button of its own.
-  showPrimaryButton(): boolean {
-    return !this.expanded;
-  }
-
-  // A practitioner with no availability is left silent rather than labelled, so
-  // the footer is dropped entirely once it holds neither slots nor a button.
-  showBookingArea(): boolean {
-    return (
-      this.item?.type === 'doctor' &&
-      (this.isLoadingSlots() || this.hasSlots() || this.showPrimaryButton())
-    );
-  }
 
   constructor(private searchService: PractitionerSearchService) {}
 
@@ -104,16 +83,6 @@ export class SearchResultCardComponent implements OnChanges, OnDestroy {
 
   onCardClick(): void {
     this.itemClick.emit(this.item);
-  }
-
-  onDetails(event: Event): void {
-    event.stopPropagation();
-    this.details.emit(this.item);
-  }
-
-  onBack(event: Event): void {
-    event.stopPropagation();
-    this.collapse.emit();
   }
 
   onBook(event: Event, slot: Slot | null = null): void {

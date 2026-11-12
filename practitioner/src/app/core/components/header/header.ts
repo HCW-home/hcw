@@ -29,6 +29,9 @@ import { UserWebSocketService } from '../../services/user-websocket.service';
 import { Auth } from '../../services/auth';
 import { BrowserNotificationService } from '../../services/browser-notification.service';
 import { ActionHandlerService } from '../../services/action-handler.service';
+import { ConsultationService } from '../../services/consultation.service';
+import { ActiveCallService } from '../../services/active-call.service';
+import { IncomingCallService } from '../../services/incoming-call.service';
 import { ToasterService } from '../../services/toaster.service';
 import { IUser } from '../../../modules/user/models/user';
 import { INotification, NotificationStatus } from '../../models/notification';
@@ -65,6 +68,9 @@ export class Header implements OnInit, OnDestroy {
   private authService = inject(Auth);
   private browserNotificationService = inject(BrowserNotificationService);
   private actionHandler = inject(ActionHandlerService);
+  private consultationService = inject(ConsultationService);
+  private activeCallService = inject(ActiveCallService);
+  private incomingCallService = inject(IncomingCallService);
   private toasterService = inject(ToasterService);
   private t = inject(TranslationService);
   private destroy$ = new Subject<void>();
@@ -153,9 +159,44 @@ export class Header implements OnInit, OnDestroy {
                   const url = new URL(event.access_link);
                   const action = url.searchParams.get('action');
                   const id = url.searchParams.get('id');
-                  const model = url.searchParams.get('model');
-                  if (action && id) {
-                    this.actionHandler.handleAction(action, id, model);
+                  if (action === 'join' && id) {
+                    this.consultationService.getParticipantById(id).subscribe({
+                      next: participant => {
+                        const consultation =
+                          participant.appointment.consultation;
+                        const consultationId =
+                          typeof consultation === 'object'
+                            ? (consultation as { id: number }).id
+                            : consultation;
+                        this.router.navigate(
+                          [
+                            '/',
+                            RoutePaths.USER,
+                            RoutePaths.CONSULTATIONS,
+                            consultationId,
+                          ],
+                          {
+                            queryParams: {
+                              join: 'true',
+                              appointmentId: participant.appointment.id,
+                            },
+                          }
+                        );
+                      },
+                      error: () => {
+                        this.router.navigate([
+                          '/',
+                          RoutePaths.CONFIRM_PRESENCE,
+                          id,
+                        ]);
+                      },
+                    });
+                  } else if (action && id) {
+                    const route = this.actionHandler.getRouteForAction(
+                      action,
+                      id
+                    );
+                    this.router.navigateByUrl(route);
                   }
                 } catch {
                   /* invalid URL */
@@ -425,7 +466,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   onNotificationClick(notification: INotification) {
-    if (notification.id !== null && notification.status !== NotificationStatus.READ) {
+    if (notification.status !== NotificationStatus.READ) {
       this.notificationService.markAsRead(notification.id).subscribe();
     }
     this.closeNotifications();
@@ -455,8 +496,59 @@ export class Header implements OnInit, OnDestroy {
       );
     }
 
+    if (action === 'join' && id) {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: participant => {
+          this.activeCallService.startCall({
+            appointmentId: participant.appointment.id,
+          });
+          this.incomingCallService.setActiveCall(participant.appointment.id);
+        },
+        error: () => {
+          this.router.navigate(['/', RoutePaths.CONFIRM_PRESENCE, id]);
+        },
+      });
+      return;
+    }
+
+    if (action === 'message' && id && model === 'consultations.Participant') {
+      this.consultationService.getParticipantById(id).subscribe({
+        next: participant => {
+          const consultation = participant.appointment.consultation;
+          const consultationId =
+            typeof consultation === 'object'
+              ? (consultation as { id: number }).id
+              : consultation;
+          if (consultationId) {
+            this.router.navigate([
+              '/',
+              RoutePaths.USER,
+              RoutePaths.CONSULTATIONS,
+              consultationId,
+            ]);
+          } else {
+            this.router.navigate([
+              '/',
+              RoutePaths.USER,
+              RoutePaths.APPOINTMENTS,
+            ], { queryParams: { participantId: id } });
+          }
+        },
+        error: () => {
+          this.router.navigate([
+            '/',
+            RoutePaths.USER,
+            RoutePaths.CONSULTATIONS,
+          ]);
+        },
+      });
+      return;
+    }
+
     if (action && id) {
-      this.actionHandler.handleAction(action, id, model);
+      const route = this.actionHandler.getRouteForAction(action, id);
+      this.router.navigateByUrl(route);
+      return;
     }
   }
 

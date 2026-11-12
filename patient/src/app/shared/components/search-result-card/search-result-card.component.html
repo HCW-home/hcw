@@ -1,10 +1,4 @@
-<div class="org-card" [class.selected]="selected" [class.expanded]="expanded">
-  @if (expanded) {
-    <button class="oc-back" type="button" (click)="onBack($event)">
-      <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
-      <span>{{ 'practitioner.backToResults' | translate }}</span>
-    </button>
-  }
+<div class="org-card" [class.selected]="selected" (click)="onCardClick()">
   <div class="oc-top">
     @if (item.logo) {
       <img [src]="item.logo" [alt]="item.name" class="oc-logo" [class.oc-logo--doctor]="item.type === 'doctor'" />
@@ -15,63 +9,47 @@
     }
     <div class="oc-main">
       <div class="oc-title-row">
-        <h3 class="oc-name">
-          <!-- Stretched button rather than a clickable card: the card already
-               contains six buttons, and nesting buttons is invalid HTML. This
-               keeps one focus stop carrying the accessible name, while ::after
-               preserves the whole-card click target. -->
-          <button type="button" class="oc-name-button" (click)="onCardClick()"
-                  [attr.aria-expanded]="expanded">
-            {{ item.name }}
-          </button>
-        </h3>
+        <h3 class="oc-name">{{ item.name }}</h3>
         <span class="type-chip" [class.type-chip--doctor]="item.type === 'doctor'">
-          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'" aria-hidden="true"></ion-icon>
+          <ion-icon [name]="item.type === 'doctor' ? 'person' : 'business'"></ion-icon>
           {{ (item.type === 'doctor' ? 'map.typeDoctor' : 'map.typeOrganisation') | translate }}
         </span>
       </div>
       @if (item.specialities) {
         <p class="oc-meta oc-meta--spec">
-          <ion-icon name="medkit-outline" aria-hidden="true"></ion-icon>
+          <ion-icon name="medkit-outline"></ion-icon>
           <span>{{ item.specialities }}</span>
         </p>
       }
       @if (item.subtitle) {
         <p class="oc-meta">
-          <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+          <ion-icon name="location-outline"></ion-icon>
           <span>{{ item.subtitle }}</span>
         </p>
       }
     </div>
   </div>
 
-  @if (expanded) {
-    <div class="oc-details">
-      <ng-content></ng-content>
-    </div>
-  }
-
-  <!-- A practitioner with no availability says nothing at all, so the whole
-       footer disappears once neither slots nor a button are left to show. -->
-  @if (showBookingArea()) {
+  @if (item.type === 'doctor') {
     <div class="oc-booking">
-      @if (isLoadingSlots()) {
-        <div class="oc-slot-area">
+      <div class="oc-slot-area">
+        @if (isLoadingSlots()) {
           <div class="oc-slots-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
-        </div>
-      } @else if (hasSlots()) {
-        <div class="oc-slot-area">
+        } @else if (!hasSlots()) {
+          <div class="oc-note">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>{{ 'map.noSlots' | translate }}</span>
+          </div>
+        } @else {
           <div class="day-nav">
-            <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)"
-                    [attr.aria-label]="'common.previous' | translate">
-              <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+            <button class="day-arrow" type="button" [disabled]="!hasPrevDay()" (click)="prevDay($event)">
+              <ion-icon name="chevron-back-outline"></ion-icon>
             </button>
             <span class="day-label">{{ currentDate() | localDate: 'EEE d MMM' }}</span>
-            <button class="day-arrow" type="button" [disabled]="!hasNextDay()" (click)="nextDay($event)"
-                    [attr.aria-label]="'common.next' | translate">
-              <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+            <button class="day-arrow" type="button" [disabled]="!hasNextDay()" (click)="nextDay($event)">
+              <ion-icon name="chevron-forward-outline"></ion-icon>
             </button>
           </div>
           <div class="slot-chips">
@@ -81,21 +59,12 @@
               </button>
             }
           </div>
-        </div>
-      }
-      @if (showPrimaryButton()) {
-        @if (primaryAction === 'details') {
-          <button class="rdv-button" type="button" (click)="onDetails($event)">
-            <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
-            <span>{{ 'map.detailsButton' | translate }}</span>
-          </button>
-        } @else {
-          <button class="rdv-button" type="button" (click)="onBook($event)">
-            <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
-            <span>{{ 'map.bookButton' | translate }}</span>
-          </button>
         }
-      }
+      </div>
+      <button class="rdv-button" type="button" (click)="onBook($event)">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>{{ 'map.bookButton' | translate }}</span>
+      </button>
     </div>
   }
 </div>
