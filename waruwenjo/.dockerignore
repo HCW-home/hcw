@@ -1,0 +1,5 @@
+# The Angular build must start from sources, never from committed artefacts.
+node_modules/
+.angular/
+dist/
+.vscode/

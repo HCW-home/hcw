@@ -1,0 +1,236 @@
+name: Release
+
+# Production pipeline:
+#   GitHub push -> GitHub-hosted ARM64 runner -> GHCR -> Coolify -> Oracle.
+#
+# Oracle only ever pulls and runs published images. No Docker build, no
+# Angular/Django compilation, and no GitHub runner ever executes on Oracle.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: Rebuild every image even if its sources did not change
+        type: boolean
+        default: false
+      skip_deploy:
+        description: Build and publish images without deploying to Coolify
+        type: boolean
+        default: false
+
+# Least privilege: read the repo, write packages, nothing else.
+permissions:
+  contents: read
+  packages: write
+
+# One production release at a time; queued instead of cancelled so a commit is
+# never half-deployed.
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  validate:
+    name: Validate
+    uses: ./.github/workflows/ci.yml
+
+  detect:
+    name: Detect changed components
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      images: ${{ steps.detect.outputs.images }}
+      tag: ${{ steps.detect.outputs.tag }}
+      namespace: ${{ steps.detect.outputs.namespace }}
+      deploy_hcw: ${{ steps.detect.outputs.deploy_hcw }}
+      deploy_waruwenjo: ${{ steps.detect.outputs.deploy_waruwenjo }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Map changed paths to images
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          FORCE_ALL: ${{ inputs.force_all }}
+        run: ./scripts/ci/detect-changes.sh
+
+  build:
+    name: Build ${{ matrix.image }} (linux/arm64)
+    needs: [validate, detect]
+    # Native ARM64 GitHub-hosted runner: no QEMU emulation, and nothing runs on
+    # the Oracle server.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    steps:
+      - name: Nothing to build
+        if: matrix.image == 'noop'
+        run: echo "No component changed in this commit; skipping image builds."
+
+      - uses: actions/checkout@v4
+        if: matrix.image != 'noop'
+
+      - uses: docker/setup-buildx-action@v3
+        if: matrix.image != 'noop'
+
+      - name: Log in to GHCR
+        if: matrix.image != 'noop'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.image }}
+        if: matrix.image != 'noop'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          # Single-platform on purpose: the Oracle server is ARM64 only.
+          platforms: linux/arm64
+          push: true
+          # Plain manifests keep the images pullable by any Docker/Coolify
+          # version; traceability comes from the OCI labels below.
+          provenance: false
+          tags: ${{ env.REGISTRY }}/${{ needs.detect.outputs.namespace }}/${{ matrix.image }}:${{ needs.detect.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.detect.outputs.tag }}
+            org.opencontainers.image.title=${{ matrix.image }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+      - name: Verify the image is linux/arm64
+        if: matrix.image != 'noop'
+        env:
+          IMAGE: ${{ matrix.image }}
+          TAG: ${{ needs.detect.outputs.tag }}
+          NAMESPACE: ${{ needs.detect.outputs.namespace }}
+        run: ./scripts/ci/verify-arm64.sh "${REGISTRY}/${NAMESPACE}/${IMAGE}:${TAG}"
+
+  publish:
+    name: Publish production tags
+    needs: [detect, build]
+    # Only runs when every scheduled image built and pushed successfully, so a
+    # partially published release can never move the production tags.
+    if: needs.detect.outputs.images != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Point production tags at ${{ needs.detect.outputs.tag }}
+        env:
+          NAMESPACE: ${{ needs.detect.outputs.namespace }}
+          TAG: ${{ needs.detect.outputs.tag }}
+          IMAGES: ${{ needs.detect.outputs.images }}
+        run: ./scripts/ci/promote-images.sh
+
+  deploy-hcw:
+    name: Deploy HCW stack
+    needs: [detect, publish]
+    if: needs.detect.outputs.deploy_hcw == 'true' && inputs.skip_deploy != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Coolify deployment and wait for completion
+        id: deploy
+        env:
+          COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_HCW_SERVICE_UUID }}
+        run: ./scripts/ci/coolify-deploy.sh "HCW"
+
+      - name: Verify HCW health
+        env:
+          HEALTHCHECK_URLS: ${{ secrets.HCW_HEALTHCHECK_URLS }}
+        run: ./scripts/ci/health-check.sh
+
+      - name: Deployment summary
+        if: always()
+        env:
+          STACK: HCW
+          IMAGES: ${{ needs.detect.outputs.images }}
+          TAG: ${{ needs.detect.outputs.tag }}
+          DEPLOYMENT_UUID: ${{ steps.deploy.outputs.coolify_deployment_uuid }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          {
+            echo "### $STACK deployment"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Image tag | \`${TAG}\` |"
+            echo "| Images | ${IMAGES} |"
+            echo "| Coolify deployment | \`${DEPLOYMENT_UUID:-n/a}\` |"
+            echo "| Trigger outcome | ${DEPLOY_OUTCOME} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-waruwenjo:
+    name: Deploy WaruWenJo wrapper
+    # Independent of the HCW stack: a wrapper-only change redeploys only this
+    # resource, leaving the HCW containers untouched.
+    needs: [detect, publish]
+    if: needs.detect.outputs.deploy_waruwenjo == 'true' && inputs.skip_deploy != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Coolify deployment and wait for completion
+        id: deploy
+        env:
+          COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_WARUWENJO_SERVICE_UUID }}
+        run: ./scripts/ci/coolify-deploy.sh "WaruWenJo"
+
+      - name: Verify WaruWenJo health
+        env:
+          HEALTHCHECK_URLS: ${{ secrets.WARUWENJO_HEALTHCHECK_URLS }}
+        run: ./scripts/ci/health-check.sh
+
+      - name: Deployment summary
+        if: always()
+        env:
+          STACK: WaruWenJo
+          IMAGES: ${{ needs.detect.outputs.images }}
+          TAG: ${{ needs.detect.outputs.tag }}
+          DEPLOYMENT_UUID: ${{ steps.deploy.outputs.coolify_deployment_uuid }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          {
+            echo "### $STACK deployment"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Image tag | \`${TAG}\` |"
+            echo "| Images | ${IMAGES} |"
+            echo "| Coolify deployment | \`${DEPLOYMENT_UUID:-n/a}\` |"
+            echo "| Trigger outcome | ${DEPLOY_OUTCOME} |"
+          } >> "$GITHUB_STEP_SUMMARY"

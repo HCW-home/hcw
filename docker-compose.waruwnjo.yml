@@ -1,0 +1,22 @@
+# WaruWenJo wrapper — deployed as its own Coolify resource.
+#
+# Kept separate from docker-compose.production.yml on purpose: a wrapper
+# homepage/frontend change redeploys only this stack, so the HCW patient,
+# practitioner and admin frontends, the HCW API, PostgreSQL, Redis, Celery and
+# LiveKit are never restarted by a wrapper release.
+#
+# Like the HCW stack, this file contains no build: directive. The image is
+# built by GitHub Actions (native linux/arm64) and published to GHCR.
+#
+# It joins the HCW API over the network shared with the HCW stack, addressed by
+# WWJ_BACKEND_URL (a public API base URL also works).
+
+services:
+  waruwenjo:
+    image: "ghcr.io/${GHCR_OWNER:-prashanthkumars17}/hcw6-waruwenjo:${WWJ_TAG:-production}"
+    restart: always
+    pull_policy: always
+    environment:
+      BACKEND_URL: "${WWJ_BACKEND_URL:?WWJ_BACKEND_URL}"
+    ports:
+      - "8083:8080"

@@ -1,13 +1,13 @@
 name: Tests
 
+# Reusable: called by ci.yml (pull requests / master) and by release.yml before
+# any production image is built, so a release can never skip the suite.
 on:
-  push:
-    branches: [master]
-  pull_request:
+  workflow_call:
 
 # Cancel superseded runs when a branch or PR is pushed again.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

@@ -1,0 +1,44 @@
+name: CI
+
+# Single entry point for pull-request / branch validation.
+#   - `tests` runs the existing Django + Angular suite (tests.yml).
+#   - `deployment-config` proves the Compose files and Dockerfiles are valid and
+#     that the production stack contains no build directives.
+# Nothing here builds or publishes production images, so untrusted pull
+# requests can never push to GHCR.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
+  deployment-config:
+    name: Deployment configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # PyYAML is used by scripts/ci/validate-compose.sh to inspect the parsed
+      # Compose model instead of pattern-matching raw text.
+      - name: Install validation helpers
+        run: python3 -m pip install --quiet --disable-pip-version-check pyyaml
+
+      - name: Validate Compose files and Dockerfiles
+        run: ./scripts/ci/validate-compose.sh
+
+      - name: Validate environment variable documentation
+        run: ./scripts/ci/validate-env.sh

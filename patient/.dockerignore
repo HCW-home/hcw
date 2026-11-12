@@ -1,0 +1,8 @@
+# The Angular build only needs package.json, yarn.lock, sources and assets.
+node_modules/
+.angular/
+dist/
+www/
+android/
+ios/
+.vscode/

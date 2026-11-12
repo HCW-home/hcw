@@ -1,0 +1,181 @@
+# Production deployment manifest for Coolify on the Oracle Cloud ARM64 server.
+#
+# Everything here runs at runtime only. Images are built by GitHub Actions on
+# GitHub-hosted ARM64 runners and published to GHCR, so this file must never
+# contain a build: directive — scripts/ci/validate-compose.sh fails CI if one
+# appears.
+#
+# Local development keeps using docker-compose.yml (which still builds).
+# Video consultation infrastructure (LiveKit) is not part of this stack: it is
+# configured per tenant in the HCW admin and remains untouched.
+#
+# Volumes, service names, networking, health checks, restart policies and
+# environment semantics are carried over from docker-compose.yml so existing
+# data and behaviour are preserved.
+
+x-backend-env: &backend-env
+  DJANGOSECRET_KEY: "${DJANGOSECRET_KEY:?DJANGOSECRET_KEY}"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  DATABASE_HOST: "db"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "${POSTGRES_DB:-hcw}"
+  DATABASE_USER: "${POSTGRES_USER:-hcw}"
+  DATABASE_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD}"
+
+x-backend-runtime-env: &backend-runtime-env
+  <<: *backend-env
+  ALLOWED_HOSTS: "${ALLOWED_HOSTS:-*}"
+  DEBUG: "${DEBUG:-False}"
+  CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:-}"
+
+x-backend-image: &backend-image "ghcr.io/${GHCR_OWNER:-prashanthkumars17}/hcw6-backend:${APP_TAG:-production}"
+
+services:
+
+  migrate:
+    image: *backend-image
+    command: >
+      sh -c "
+        echo 'Running migrations...';
+        python manage.py migrate;
+        echo 'Migration completed successfully';
+      "
+    environment: *backend-runtime-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+    pull_policy: always
+
+  provision:
+    image: *backend-image
+    command: python manage.py bootstrap_tenant
+    environment:
+      <<: *backend-env
+      # Tenant and public URLs
+      TENANT_SCHEMA: "${TENANT_SCHEMA:-default}"
+      TENANT_NAME: "${TENANT_NAME:-HCW@Home}"
+      TENANT_PRIMARY_DOMAIN: "${TENANT_PRIMARY_DOMAIN:-localhost}"
+      TENANT_PATIENT_DOMAIN: "${TENANT_PATIENT_DOMAIN:-}"
+      TENANT_ADMIN_DOMAIN: "${TENANT_ADMIN_DOMAIN:-}"
+      PRACTITIONER_BASE_URL: "${PRACTITIONER_BASE_URL:-http://localhost:8080}"
+      PATIENT_BASE_URL: "${PATIENT_BASE_URL:-http://localhost:8081}"
+      # Superuser
+      SUPERUSER_EMAIL: "${SUPERUSER_EMAIL:-admin@example.com}"
+      SUPERUSER_PASSWORD: "${SUPERUSER_PASSWORD:-admin}"
+      # LiveKit media server, skipped when the three values are empty
+      LIVEKIT_URL: "${LIVEKIT_URL:-}"
+      LIVEKIT_API_KEY: "${LIVEKIT_API_KEY:-}"
+      LIVEKIT_API_SECRET: "${LIVEKIT_API_SECRET:-}"
+      # Sender of the email messaging provider
+      MESSAGING_FROM_EMAIL: "${MESSAGING_FROM_EMAIL:-}"
+      # Keycloak / OpenID Connect, skipped when client id or server url is empty
+      SSO_PROVIDER_ID: "${SSO_PROVIDER_ID:-openid}"
+      SSO_NAME: "${SSO_NAME:-Keycloak}"
+      SSO_CLIENT_ID: "${SSO_CLIENT_ID:-}"
+      SSO_CLIENT_SECRET: "${SSO_CLIENT_SECRET:-}"
+      SSO_SERVER_URL: "${SSO_SERVER_URL:-}"
+      SSO_DISABLE_PASSWORD_LOGIN: "${SSO_DISABLE_PASSWORD_LOGIN:-false}"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+    pull_policy: always
+
+  api:
+    image: *backend-image
+    restart: always
+    pull_policy: always
+    environment: *backend-runtime-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  admin:
+    image: "ghcr.io/${GHCR_OWNER:-prashanthkumars17}/hcw6-admin:${APP_TAG:-production}"
+    restart: always
+    pull_policy: always
+    environment:
+      BACKEND_URL: "http://api:8000"
+    depends_on:
+      - api
+    ports:
+      # The admin image is nginx-unprivileged listening on 8080 (backend/nginx).
+      - "8082:8080"
+
+  celery:
+    image: *backend-image
+    entrypoint: celery -A core.celery worker --loglevel=info
+    restart: always
+    pull_policy: always
+    environment: *backend-runtime-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  scheduler:
+    image: *backend-image
+    entrypoint: celery -A core beat --loglevel=info
+    restart: always
+    pull_policy: always
+    environment: *backend-runtime-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  patient:
+    image: "ghcr.io/${GHCR_OWNER:-prashanthkumars17}/hcw6-patient:${APP_TAG:-production}"
+    restart: always
+    pull_policy: always
+    environment:
+      BACKEND_URL: "http://api:8000"
+    depends_on:
+      - api
+    ports:
+      - "8081:8081"
+
+  practitioner:
+    image: "ghcr.io/${GHCR_OWNER:-prashanthkumars17}/hcw6-practitioner:${APP_TAG:-production}"
+    restart: always
+    pull_policy: always
+    environment:
+      BACKEND_URL: "http://api:8000"
+    depends_on:
+      - api
+    ports:
+      - "8080:8080"
+
+  db:
+    image: docker.io/postgres:15
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-hcw}"
+      POSTGRES_USER: "${POSTGRES_USER:-hcw}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD}"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: docker.io/redis:7
+    restart: always
+    volumes:
+      - ./data/redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
