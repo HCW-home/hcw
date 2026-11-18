@@ -112,7 +112,7 @@ docker compose exec api python3 manage.py tenant_command createsuperuser -s loca
 docker compose exec api python manage.py loaddata initial/TestData.json
 ```
 
-This creates test users (password: `Test1234`). See the [README](https://github.com/HCW-home/hcw-home) for the full list.
+This creates test users (password: `Test1234`). See the [README](https://github.com/HCW-home/hcw) for the full list.
 
 ## Services and Ports
 
