@@ -15,6 +15,7 @@
       "rules": {
         "@angular-eslint/prefer-standalone": "off",
         "@angular-eslint/prefer-inject": "off",
+        "@angular-eslint/no-output-native": "off",
         "@angular-eslint/component-class-suffix": [
           "error",
           {
