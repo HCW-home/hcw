@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, importProvidersFrom } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -21,6 +22,7 @@ describe('AppComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         importProvidersFrom(IonicStorageModule.forRoot()),
+        provideServiceWorker('ngsw-worker.js', { enabled: false }),
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
