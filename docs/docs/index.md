@@ -26,5 +26,5 @@ See the [Use Cases](use-cases/appointment-management.md) section to discover the
 ## Links
 
 - [Official Website](https://hcw-at-home.com/)
-- [Source Code](https://github.com/HCW-home/hcw-home)
+- [Source Code](https://github.com/HCW-home/hcw)
 - [Translations](https://translate.iabsis.com/)

@@ -1,4 +1,4 @@
-site_name: HCW@Home Documentation
+site_name: HCW@Home v6 documentation
 site_description: Documentation for HCW@Home V6 teleconsultation platform
 site_url: https://hcw-at-home.com/docs
 
@@ -18,6 +18,72 @@ theme:
 
 plugins:
   - search
+  - redirects:
+      redirect_maps:
+        # Anciennes URLs servies sous une base /docs/ — voir Search Console
+        'docs/admin/advanced-options.md': 'admin/advanced-options.md'
+        'docs/admin/encryption.md': 'admin/encryption.md'
+        'docs/admin/fhir.md': 'admin/fhir.md'
+        'docs/admin/media-servers.md': 'admin/media-servers.md'
+        'docs/admin/messaging-providers.md': 'admin/messaging-providers.md'
+        'docs/admin/organizations.md': 'admin/organizations.md'
+        'docs/admin/reasons.md': 'admin/reasons.md'
+        'docs/admin/sso.md': 'admin/sso.md'
+        'docs/admin/terms.md': 'admin/terms.md'
+        'docs/admin/users.md': 'admin/users.md'
+        'docs/architecture.md': 'architecture.md'
+        'docs/deployment/debian.md': 'deployment/debian.md'
+        'docs/deployment/docker-compose.md': 'deployment/docker-compose.md'
+        'docs/deployment/encryption-at-rest.md': 'deployment/encryption-at-rest.md'
+        'docs/deployment/environment-variables.md': 'deployment/environment-variables.md'
+        'docs/development/guidelines.md': 'development/guidelines.md'
+        'docs/index.md': 'index.md'
+        'docs/use-cases/appointment-management.md': 'use-cases/appointment-management.md'
+        'docs/use-cases/followup-chat.md': 'use-cases/followup-chat.md'
+        'docs/use-cases/slot-booking.md': 'use-cases/slot-booking.md'
+        'docs/use-cases/video-call-scheduling.md': 'use-cases/video-call-scheduling.md'
+        'docs/user-guide/appointments.md': 'user-guide/appointments.md'
+        'docs/user-guide/closing-follow-up.md': 'user-guide/closing-follow-up.md'
+        'docs/user-guide/create-follow-up.md': 'user-guide/create-follow-up.md'
+        'docs/user-guide/index.md': 'user-guide/index.md'
+        'docs/user-guide/manage-follow-up.md': 'user-guide/manage-follow-up.md'
+        'docs/user-guide/navigation.md': 'user-guide/navigation.md'
+        'docs/user-guide/participants.md': 'user-guide/participants.md'
+        'docs/user-guide/profile.md': 'user-guide/profile.md'
+        'docs/user-guide/signing-in.md': 'user-guide/signing-in.md'
+        'docs/user-guide/video-consultation.md': 'user-guide/video-consultation.md'
+        # Mêmes URLs sous /docs/fr/ — cibles absolues (plugin i18n)
+        'docs/fr/admin/advanced-options.md': 'https://docs-v6.hcw-at-home.com/fr/admin/advanced-options/'
+        'docs/fr/admin/encryption.md': 'https://docs-v6.hcw-at-home.com/fr/admin/encryption/'
+        'docs/fr/admin/fhir.md': 'https://docs-v6.hcw-at-home.com/fr/admin/fhir/'
+        'docs/fr/admin/media-servers.md': 'https://docs-v6.hcw-at-home.com/fr/admin/media-servers/'
+        'docs/fr/admin/messaging-providers.md': 'https://docs-v6.hcw-at-home.com/fr/admin/messaging-providers/'
+        'docs/fr/admin/organizations.md': 'https://docs-v6.hcw-at-home.com/fr/admin/organizations/'
+        'docs/fr/admin/reasons.md': 'https://docs-v6.hcw-at-home.com/fr/admin/reasons/'
+        'docs/fr/admin/sso.md': 'https://docs-v6.hcw-at-home.com/fr/admin/sso/'
+        'docs/fr/admin/terms.md': 'https://docs-v6.hcw-at-home.com/fr/admin/terms/'
+        'docs/fr/admin/users.md': 'https://docs-v6.hcw-at-home.com/fr/admin/users/'
+        'docs/fr/architecture.md': 'https://docs-v6.hcw-at-home.com/fr/architecture/'
+        'docs/fr/deployment/debian.md': 'https://docs-v6.hcw-at-home.com/fr/deployment/debian/'
+        'docs/fr/deployment/docker-compose.md': 'https://docs-v6.hcw-at-home.com/fr/deployment/docker-compose/'
+        'docs/fr/deployment/encryption-at-rest.md': 'https://docs-v6.hcw-at-home.com/fr/deployment/encryption-at-rest/'
+        'docs/fr/deployment/environment-variables.md': 'https://docs-v6.hcw-at-home.com/fr/deployment/environment-variables/'
+        'docs/fr/development/guidelines.md': 'https://docs-v6.hcw-at-home.com/fr/development/guidelines/'
+        'docs/fr/index.md': 'https://docs-v6.hcw-at-home.com/fr/'
+        'docs/fr/use-cases/appointment-management.md': 'https://docs-v6.hcw-at-home.com/fr/use-cases/appointment-management/'
+        'docs/fr/use-cases/followup-chat.md': 'https://docs-v6.hcw-at-home.com/fr/use-cases/followup-chat/'
+        'docs/fr/use-cases/slot-booking.md': 'https://docs-v6.hcw-at-home.com/fr/use-cases/slot-booking/'
+        'docs/fr/use-cases/video-call-scheduling.md': 'https://docs-v6.hcw-at-home.com/fr/use-cases/video-call-scheduling/'
+        'docs/fr/user-guide/appointments.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/appointments/'
+        'docs/fr/user-guide/closing-follow-up.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/closing-follow-up/'
+        'docs/fr/user-guide/create-follow-up.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/create-follow-up/'
+        'docs/fr/user-guide/index.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/'
+        'docs/fr/user-guide/manage-follow-up.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/manage-follow-up/'
+        'docs/fr/user-guide/navigation.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/navigation/'
+        'docs/fr/user-guide/participants.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/participants/'
+        'docs/fr/user-guide/profile.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/profile/'
+        'docs/fr/user-guide/signing-in.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/signing-in/'
+        'docs/fr/user-guide/video-consultation.md': 'https://docs-v6.hcw-at-home.com/fr/user-guide/video-consultation/'
   - mermaid2
   - i18n:
       languages:

@@ -43,5 +43,5 @@ Consultez la page [Cas d'utilisation](use-cases.md) pour decouvrir les scenarios
 ## Liens
 
 - [Site officiel](https://hcw-at-home.com/)
-- [Code source](https://github.com/HCW-home/hcw-home)
+- [Code source](https://github.com/HCW-home/hcw)
 - [Traductions](https://translate.iabsis.com/)

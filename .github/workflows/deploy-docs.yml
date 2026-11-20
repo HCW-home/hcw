@@ -1,0 +1,41 @@
+name: Deploy documentation
+
+# Publie docs/ sur la branche gh-pages à chaque fusion sur master.
+# Le filtre `paths` évite de redéployer la documentation à chaque commit
+# du produit : seuls les changements sous docs/ déclenchent la publication.
+on:
+  push:
+    branches: [master]
+    paths: ['docs/**', '.github/workflows/deploy-docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the documentation toolchain
+        run: pip install -r docs/requirements.txt
+
+      - name: Configure the committer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build and publish to gh-pages
+        working-directory: docs
+        run: mkdocs gh-deploy --force
