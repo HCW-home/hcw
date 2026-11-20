@@ -31,7 +31,8 @@
         "language": "Idioma",
         "skipToContent": "Saltar para o conteúdo principal",
         "previous": "Anterior",
-        "next": "Próximo"
+        "next": "Próximo",
+        "join": "Entrar"
     },
     "login": {
         "title": "Iniciar Sessão",
