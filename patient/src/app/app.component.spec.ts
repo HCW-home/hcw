@@ -1,7 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, importProvidersFrom } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-
-import { RouterModule } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { IonicStorageModule } from '@ionic/storage-angular';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AppComponent } from './app.component';
 
@@ -11,7 +13,15 @@ describe('AppComponent', () => {
   beforeEach(async () => {
 
     await TestBed.configureTestingModule({
-      imports: [AppComponent, RouterModule.forRoot([])],
+      imports: [
+        AppComponent,
+        TranslateModule.forRoot(),
+      ],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        importProvidersFrom(IonicStorageModule.forRoot()),
+      ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
   });
