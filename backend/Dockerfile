@@ -1,5 +1,5 @@
 # Use the official Python runtime image
-FROM python:3.13 as builder
+FROM python:3.13 AS builder
 
 RUN mkdir /app
 WORKDIR /app
@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 # RUN python manage.py collectstatic
 
-FROM python:3.13 as api
+FROM python:3.13 AS api
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 
@@ -40,7 +40,7 @@ EXPOSE 8000
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "core.asgi:application"]
 
 
-FROM docker.io/nginxinc/nginx-unprivileged:1.28-bookworm as admin
+FROM docker.io/nginxinc/nginx-unprivileged:1.28-bookworm AS admin
 
 COPY --from=builder /app/statics/ /usr/share/nginx/html/
 COPY nginx /etc/nginx/templates/default.conf.template
