@@ -61,7 +61,7 @@ jobs:
           BASE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
           FORCE_ALL: ${{ inputs.force_all }}
-        run: ./scripts/ci/detect-changes.sh
+        run: bash ./scripts/ci/detect-changes.sh
 
   build:
     name: Build ${{ matrix.image }} (linux/arm64)
@@ -120,7 +120,7 @@ jobs:
           IMAGE: ${{ matrix.image }}
           TAG: ${{ needs.detect.outputs.tag }}
           NAMESPACE: ${{ needs.detect.outputs.namespace }}
-        run: ./scripts/ci/verify-arm64.sh "${REGISTRY}/${NAMESPACE}/${IMAGE}:${TAG}"
+        run: bash ./scripts/ci/verify-arm64.sh "${REGISTRY}/${NAMESPACE}/${IMAGE}:${TAG}"
 
   publish:
     name: Publish production tags
@@ -131,6 +131,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
@@ -145,7 +147,7 @@ jobs:
           NAMESPACE: ${{ needs.detect.outputs.namespace }}
           TAG: ${{ needs.detect.outputs.tag }}
           IMAGES: ${{ needs.detect.outputs.images }}
-        run: ./scripts/ci/promote-images.sh
+        run: bash ./scripts/ci/promote-images.sh
 
   deploy-hcw:
     name: Deploy HCW stack
@@ -162,12 +164,12 @@ jobs:
           COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_HCW_SERVICE_UUID }}
-        run: ./scripts/ci/coolify-deploy.sh "HCW"
+        run: bash ./scripts/ci/coolify-deploy.sh "HCW"
 
       - name: Verify HCW health
         env:
           HEALTHCHECK_URLS: ${{ secrets.HCW_HEALTHCHECK_URLS }}
-        run: ./scripts/ci/health-check.sh
+        run: bash ./scripts/ci/health-check.sh
 
       - name: Deployment summary
         if: always()
@@ -207,12 +209,12 @@ jobs:
           COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_WARUWENJO_SERVICE_UUID }}
-        run: ./scripts/ci/coolify-deploy.sh "WaruWenJo"
+        run: bash ./scripts/ci/coolify-deploy.sh "WaruWenJo"
 
       - name: Verify WaruWenJo health
         env:
           HEALTHCHECK_URLS: ${{ secrets.WARUWENJO_HEALTHCHECK_URLS }}
-        run: ./scripts/ci/health-check.sh
+        run: bash ./scripts/ci/health-check.sh
 
       - name: Deployment summary
         if: always()

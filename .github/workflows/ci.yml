@@ -38,7 +38,7 @@ jobs:
         run: python3 -m pip install --quiet --disable-pip-version-check pyyaml
 
       - name: Validate Compose files and Dockerfiles
-        run: ./scripts/ci/validate-compose.sh
+        run: bash ./scripts/ci/validate-compose.sh
 
       - name: Validate environment variable documentation
-        run: ./scripts/ci/validate-env.sh
+        run: bash ./scripts/ci/validate-env.sh

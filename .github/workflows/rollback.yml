@@ -79,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           for image in $IMAGES; do
-            ./scripts/ci/verify-arm64.sh "${REGISTRY}/${NAMESPACE}/${image}:${TAG}"
+            bash ./scripts/ci/verify-arm64.sh "${REGISTRY}/${NAMESPACE}/${image}:${TAG}"
           done
 
       - name: Move production tags back to ${{ inputs.image_tag }}
@@ -87,7 +87,7 @@ jobs:
           NAMESPACE: ${{ steps.resolve.outputs.namespace }}
           TAG: ${{ inputs.image_tag }}
           IMAGES: ${{ steps.resolve.outputs.images }}
-        run: ./scripts/ci/promote-images.sh
+        run: bash ./scripts/ci/promote-images.sh
 
       - name: Redeploy HCW through Coolify
         if: inputs.deploy && (inputs.scope == 'hcw' || inputs.scope == 'both')
@@ -95,13 +95,13 @@ jobs:
           COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_HCW_SERVICE_UUID }}
-        run: ./scripts/ci/coolify-deploy.sh "HCW rollback"
+        run: bash ./scripts/ci/coolify-deploy.sh "HCW rollback"
 
       - name: Verify HCW health
         if: inputs.deploy && (inputs.scope == 'hcw' || inputs.scope == 'both')
         env:
           HEALTHCHECK_URLS: ${{ secrets.HCW_HEALTHCHECK_URLS }}
-        run: ./scripts/ci/health-check.sh
+        run: bash ./scripts/ci/health-check.sh
 
       - name: Redeploy WaruWenJo through Coolify
         if: inputs.deploy && (inputs.scope == 'waruwenjo' || inputs.scope == 'both')
@@ -109,13 +109,13 @@ jobs:
           COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_WARUWENJO_SERVICE_UUID }}
-        run: ./scripts/ci/coolify-deploy.sh "WaruWenJo rollback"
+        run: bash ./scripts/ci/coolify-deploy.sh "WaruWenJo rollback"
 
       - name: Verify WaruWenJo health
         if: inputs.deploy && (inputs.scope == 'waruwenjo' || inputs.scope == 'both')
         env:
           HEALTHCHECK_URLS: ${{ secrets.WARUWENJO_HEALTHCHECK_URLS }}
-        run: ./scripts/ci/health-check.sh
+        run: bash ./scripts/ci/health-check.sh
 
       - name: Summary
         if: always()
