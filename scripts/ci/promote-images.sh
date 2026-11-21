@@ -47,9 +47,16 @@ for image in $IMAGES; do
   source_digest="$(digest_of "$source_ref")"
   target_digest="$(digest_of "$target_ref")"
 
+  # If source_digest equals target_digest, direct match.
+  # If imagetools create wrapped the single manifest into an index, verify that target points to source.
   if [ "$source_digest" != "$target_digest" ]; then
-    echo "::error::${target_ref} ($target_digest) does not match ${source_ref} ($source_digest)" >&2
-    exit 1
+    target_raw="$(docker buildx imagetools inspect "$target_ref" --raw 2>/dev/null)" || true
+    if [[ "$target_raw" == *"$source_digest"* ]]; then
+      echo "  verified: target manifest list contains source digest $source_digest"
+    else
+      echo "::error::${target_ref} ($target_digest) does not reference ${source_ref} ($source_digest)" >&2
+      exit 1
+    fi
   fi
 
   echo "  ok ${image} -> ${target_digest}"
