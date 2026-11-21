@@ -14,54 +14,13 @@ fi
 
 echo "Inspecting ${ref}"
 
-# Try docker buildx imagetools inspect first.
-# If --raw is empty or unparseable, fall back to standard inspect without --raw.
-raw=""
-if raw="$(docker buildx imagetools inspect "$ref" --raw 2>/dev/null)" && [ -n "$raw" ]; then
-  printf '%s' "$raw" | python3 - <<'PY'
-import json
-import sys
+# Try docker buildx imagetools inspect (human readable text)
+inspect_output="$(docker buildx imagetools inspect "$ref" 2>&1)" || true
 
-raw_input = sys.stdin.read().strip()
-if not raw_input:
-    sys.exit("::error::manifest payload is empty")
-
-try:
-    doc = json.loads(raw_input)
-except Exception as e:
-    sys.exit(f"::error::failed to parse manifest JSON: {e}\nRaw output was:\n{raw_input}")
-
-platforms = []
-if "manifests" in doc:  # multi-platform index
-    for entry in doc["manifests"]:
-        platform = entry.get("platform") or {}
-        if platform.get("os") and platform.get("architecture"):
-            platforms.append((platform["os"], platform["architecture"]))
-elif doc.get("architecture"):
-    platforms.append((doc.get("os", "linux"), doc["architecture"]))
-
-if platforms:
-    print("platforms: " + ", ".join(f"{os}/{arch}" for os, arch in platforms))
-    unsupported = sorted({f"{os}/{arch}" for os, arch in platforms if os != "linux" or arch != "arm64"})
-    if unsupported:
-        sys.exit(f"::error::image is not linux/arm64 only: {', '.join(unsupported)}")
-    print("verified: linux/arm64")
-    sys.exit(0)
-sys.exit(1)
-PY
-  exit 0
-fi
-
-# Fallback: parse formatted text output from `docker buildx imagetools inspect "$ref"`
-echo "Falling back to human-readable inspection output..."
-inspect_output="$(docker buildx imagetools inspect "$ref" 2>&1)" || {
-  echo "::error::could not inspect ${ref}: ${inspect_output}" >&2
-  exit 1
-}
-
+echo "Raw inspect output:"
 echo "$inspect_output"
 
-if echo "$inspect_output" | grep -qi "linux/arm64"; then
+if [ -n "$inspect_output" ] && echo "$inspect_output" | grep -qi "linux/arm64"; then
   if echo "$inspect_output" | grep -qiE "linux/(amd64|386|arm/v7|arm/v6|riscv64|ppc64le|s390x)"; then
     echo "::error::image contains non-arm64 architectures" >&2
     exit 1
@@ -70,14 +29,43 @@ if echo "$inspect_output" | grep -qi "linux/arm64"; then
   exit 0
 fi
 
-# Fallback 2: docker manifest inspect
-if command -v docker >/dev/null 2>&1; then
-  echo "Trying docker manifest inspect..."
-  if manifest_output="$(docker manifest inspect "$ref" 2>/dev/null)"; then
-    if echo "$manifest_output" | grep -qi "arm64"; then
+# Fallback: check raw json if present
+raw="$(docker buildx imagetools inspect "$ref" --raw 2>/dev/null)" || true
+if [ -n "$raw" ]; then
+  parsed_arch="$(printf '%s' "$raw" | python3 -c '
+import json, sys
+try:
+    doc = json.loads(sys.stdin.read())
+    archs = []
+    if "manifests" in doc:
+        for m in doc["manifests"]:
+            p = m.get("platform", {})
+            if p.get("architecture"): archs.append(p["architecture"])
+    elif doc.get("architecture"):
+        archs.append(doc["architecture"])
+    print(",".join(archs))
+except Exception:
+    pass
+' 2>/dev/null)" || true
+
+  if [ -n "$parsed_arch" ]; then
+    echo "Found architectures in raw manifest: $parsed_arch"
+    if [ "$parsed_arch" = "arm64" ]; then
       echo "verified: linux/arm64"
       exit 0
+    else
+      echo "::error::image contains non-arm64 architecture: $parsed_arch" >&2
+      exit 1
     fi
+  fi
+fi
+
+# Fallback: docker manifest inspect
+if command -v docker >/dev/null 2>&1; then
+  manifest_output="$(docker manifest inspect "$ref" 2>/dev/null)" || true
+  if [ -n "$manifest_output" ] && echo "$manifest_output" | grep -qi "arm64"; then
+    echo "verified: linux/arm64 via docker manifest"
+    exit 0
   fi
 fi
 
