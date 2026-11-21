@@ -13,8 +13,13 @@ if [ -z "$ref" ]; then
 fi
 
 echo "Inspecting ${ref}"
-if ! raw="$(docker buildx imagetools inspect "$ref" --raw)"; then
+if ! raw="$(docker buildx imagetools inspect "$ref" --raw 2>/dev/null)"; then
   echo "::error::could not read the manifest of ${ref}" >&2
+  exit 1
+fi
+
+if [ -z "$raw" ]; then
+  echo "::error::manifest of ${ref} was empty" >&2
   exit 1
 fi
 
@@ -22,7 +27,14 @@ printf '%s' "$raw" | python3 - <<'PY'
 import json
 import sys
 
-doc = json.load(sys.stdin)
+raw_input = sys.stdin.read().strip()
+if not raw_input:
+    sys.exit("::error::manifest payload is empty")
+
+try:
+    doc = json.loads(raw_input)
+except Exception as e:
+    sys.exit(f"::error::failed to parse manifest JSON: {e}\nRaw output was:\n{raw_input}")
 platforms = []
 
 if "manifests" in doc:  # multi-platform index
